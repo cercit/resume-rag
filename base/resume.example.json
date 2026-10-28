@@ -1,0 +1,42 @@
+{
+  "file_name": "Resume_Asha_Verma_Example_Analyst",
+  "role_line": "Senior Analyst, Retail Lending",
+  "summary": [
+    "Eight years at Northwind Finance, a fictional lender used as the example for this template. I started in customer support, spent four years in branch operations, and now work in the retail lending analytics team at head office.",
+    "Today I build monthly portfolio reports, track application funnels and share findings with regional managers. Before that I helped launch a two-wheeler loan product in three cities. I want to move into a product analyst role in financial services."
+  ],
+  "skills": [
+    ["Data analysis", "funnel analysis, cohort tracking, portfolio reports, KPI definitions"],
+    ["Reporting", "monthly management packs, regional dashboards, written summaries for leadership"],
+    ["Stakeholder management", "regional managers, branch teams, dealers, credit and collections teams"],
+    ["Process improvement", "report automation, data cleaning rules, handover documents"],
+    ["Product launch", "pilot planning, branch training, weekly pipeline reviews"],
+    ["Domains", "retail lending, two-wheeler loans, collections, customer service"]
+  ],
+  "tools": "Excel, SQL, Power BI, Python (pandas), Google Sheets, Jira",
+  "order": ["experience", "portfolio"],
+  "experience": [
+    {"title": "Senior Analyst, Retail Lending Analytics", "dates": "Jan 2023 – Present | Bengaluru",
+     "intro": "The team reports on loan applications, approvals and early repayments for the retail lending business.",
+     "bullets": [
+      "Built a monthly portfolio pack covering 14 regions, replacing three separate spreadsheets that regional managers used to merge by hand.",
+      "Cut report preparation time from 3 days to 1 day by moving data cleaning steps into SQL and a short Python script.",
+      "Tracked the application funnel each week and flagged regions where approval rates dropped by more than 5 points."]},
+    {"title": "Operations Officer, Branch Banking", "dates": "Apr 2019 – Dec 2022 | Mysuru",
+     "bullets": [
+      "Helped launch two-wheeler loans in three cities: trained branch staff, set up dealer onboarding and reviewed the pipeline every Monday.",
+      "Moved 45% of cash-paying customers to digital repayment through in-branch help desks.",
+      "Kept loan files audit-ready; the branch had zero major audit findings in two yearly audits."]},
+    {"title": "Customer Support Executive", "dates": "Jun 2017 – Mar 2019 | Mysuru",
+     "bullets": ["Answered loan and repayment questions by phone and in branch, and logged recurring complaints for the operations team."]}
+  ],
+  "portfolio": [
+    {"name": "Loan funnel dashboard (practice project)", "date": "2026", "link": "example.com/loan-funnel",
+     "bullets": [
+      "Built a Power BI dashboard on a public lending dataset of 50,000 synthetic applications, showing drop-off at each stage.",
+      "Wrote a one-page note on where applicants drop off and two changes worth testing."]},
+    {"name": "Collections call notes cleaner", "date": "2025", "link": "example.com/notes-cleaner",
+     "bullets": ["Wrote a Python script that groups free-text call notes into 6 reasons for missed payments, tested on 1,200 made-up notes."]}
+  ],
+  "jd_keywords": ["SQL", "Power BI", "funnel", "stakeholder", "reporting", "dashboards", "financial services", "Python"]
+}

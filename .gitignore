@@ -1,0 +1,19 @@
+﻿.env
+node_modules/
+images/
+__pycache__/
+*.pyc
+ingest/*.pdf
+.venv/
+tests/out/
+
+# Third-party documents and personal notes stay on this PC only (already loaded into the database).
+knowledge/*
+!knowledge/SOURCES.md
+/*.pdf
+/Intro.md
+/\[210 Shared\]*
+/algorithmic-writing-assistance-on-jobseekers-resumes-increases-hires/
+/greenhouse-resume-parse/
+/huntr-job-search-trends-q2-2026/
+/resumegenius-hiring-insights-report/

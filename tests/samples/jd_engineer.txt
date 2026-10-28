@@ -1,0 +1,11 @@
+Staff Backend Engineer, Payments Platform - LedgerLoop (Bengaluru)
+
+You will own the design of high-throughput payment services and lead technical direction for a team of 6.
+
+What we look for
+- 8+ years building backend systems in Go or Java
+- Deep experience with distributed systems, Kafka, and PostgreSQL
+- Track record of improving latency and reliability (SLOs, on-call, incident response)
+- Experience with Kubernetes and AWS
+- Mentoring engineers and leading design reviews
+- Payments or fintech domain knowledge

@@ -1,0 +1,14 @@
+Associate UX Researcher - Kinder Learning Apps (Remote, India)
+
+Kinder builds learning apps for school students. We want an associate UX researcher who can plan and run user interviews and usability tests with students, parents and teachers, synthesize findings, and work with designers in Figma.
+
+Must have
+- Experience running interviews and usability tests
+- Synthesis methods such as affinity mapping
+- Clear written reports for product teams
+- Comfort with surveys and basic data analysis
+
+Nice to have
+- Background in education
+- Experience with Maze or UserTesting
+- Quantitative research with SQL or Python

@@ -1,0 +1,28 @@
+{
+  "file_name": "Resume_Ananya_Rao",
+  "role_line": "B.Tech Computer Science graduate",
+  "contact": {"name": "Ananya Rao", "location": "Pune", "phone": "+91 98220 41736", "email": "ananya.rao.dev@example.com",
+    "links": [{"label": "github.com/ananyarao", "url": "https://github.com/ananyarao"}, {"label": "linkedin.com/in/ananya-rao-22", "url": "https://linkedin.com/in/ananya-rao-22"}]},
+  "summary": ["Computer science graduate from MIT World Peace University with two internships in web development and data work. I built a Django attendance app used by 140 students in my department and want to start as a junior software developer."],
+  "skills": [["Programming", "Python, Java, JavaScript, SQL"], ["Web", "Django, React, REST APIs, HTML, CSS"], ["Data", "pandas, Excel, Power BI"], ["Practices", "Git, unit testing with pytest, code reviews"]],
+  "tools": "Python, Java, JavaScript, SQL, Django, React, PostgreSQL, Git, GitHub, pandas, Power BI, VS Code",
+  "order": ["experience", "portfolio"],
+  "experience": [
+    {"company": "Persistent Systems", "title": "Software Engineering Intern", "dates": "Jan 2026 – Jun 2026 | Pune",
+     "bullets": ["Wrote REST API endpoints in Django for an internal leave-tracking tool used by 3 teams.", "Added pytest unit tests that raised test coverage of the leave module from 41% to 78%.", "Fixed 23 bugs logged in Jira during two sprints and joined daily stand-ups."]},
+    {"company": "Sahyadri Analytics", "title": "Data Analyst Intern", "dates": "May 2025 – Jul 2025 | Remote",
+     "bullets": ["Cleaned sales data for 12 retail stores in pandas and built a weekly Power BI report for the store manager.", "Cut the time to prepare the weekly report from about 5 hours to 1 hour by scripting the data clean-up."]}
+  ],
+  "portfolio": [
+    {"name": "ClassMark, attendance app", "date": "2025", "link": "github.com/ananyarao/classmark",
+     "bullets": ["Built a Django and PostgreSQL attendance app with QR check-in; 140 students and 6 teachers used it for one semester.", "Teachers export monthly attendance to Excel in one click instead of copying registers by hand."]},
+    {"name": "BudgetBuddy, expense tracker", "date": "2024", "link": "github.com/ananyarao/budgetbuddy",
+     "bullets": ["React front end with a Flask API; tracks spending by category and shows a monthly chart."]}
+  ],
+  "education": [{"title": "B.Tech, Computer Science and Engineering", "dates": "2022 – 2026, CGPA 8.4", "place": "MIT World Peace University, Pune"},
+                {"title": "Class XII, Science", "dates": "2022, 91%", "place": "Fergusson College, Pune"}],
+  "certifications": "AWS Cloud Practitioner (2025) · Python for Everybody (Coursera, 2023)",
+  "languages": "English, Hindi, Marathi",
+  "hobbies": "Chess, trekking",
+  "jd_keywords": []
+}

@@ -1,0 +1,24 @@
+{
+  "file_name": "Resume_Rahul_Menon",
+  "role_line": "Senior Software Engineer",
+  "contact": {"name": "Rahul Menon", "location": "Bengaluru", "phone": "+91 99001 23845", "email": "rahul.menon@example.com",
+    "links": [{"label": "linkedin.com/in/rahulmenon", "url": "https://linkedin.com/in/rahulmenon"}, {"label": "github.com/rmenon", "url": "https://github.com/rmenon"}]},
+  "summary": ["Backend engineer with 7 years of experience building payment and order systems in Java and Go. At Razorpay I helped move the settlement service from a monolith to microservices and cut p99 latency from 900 ms to 220 ms."],
+  "skills": [["Backend", "Java, Spring Boot, Go, gRPC, REST"], ["Data", "PostgreSQL, Redis, Kafka"], ["Cloud and ops", "AWS (EC2, RDS, SQS), Docker, Terraform, Grafana"], ["Ways of working", "design reviews, on-call, mentoring juniors"]],
+  "tools": "Java, Spring Boot, Go, PostgreSQL, Redis, Kafka, Docker, Terraform, AWS, Grafana, Jenkins, Git",
+  "order": ["experience", "portfolio"],
+  "experience": [
+    {"company": "Razorpay", "title": "Senior Software Engineer", "dates": "Mar 2022 – Present | Bengaluru",
+     "bullets": ["Helped split the settlement monolith into 4 Go services behind gRPC; p99 latency fell from 900 ms to 220 ms.", "Designed the retry and idempotency rules for payouts, which brought duplicate payouts down from about 30 a month to 2.", "Ran on-call for the settlements team one week in four and wrote 11 runbooks.", "Mentored 3 junior engineers through their first production releases."]},
+    {"company": "Swiggy", "title": "Software Engineer II", "dates": "Jul 2019 – Feb 2022 | Bengaluru",
+     "bullets": ["Built the order-batching service in Java and Kafka that grouped nearby orders for delivery partners in 8 cities.", "Moved order history reads to Redis, cutting database load on the main PostgreSQL cluster by 35%.", "Wrote Terraform modules the team used to create new services on AWS."]},
+    {"company": "Infosys", "title": "Systems Engineer", "dates": "Aug 2017 – Jun 2019 | Mysuru",
+     "bullets": ["Maintained Spring Boot billing services for a UK telecom client and fixed production defects within the agreed SLA."]}
+  ],
+  "portfolio": [],
+  "education": [{"title": "B.E., Information Science", "dates": "2013 – 2017", "place": "RV College of Engineering, Bengaluru"}],
+  "certifications": "AWS Certified Developer – Associate (2023)",
+  "languages": "English, Malayalam, Kannada",
+  "hobbies": "Cycling",
+  "jd_keywords": []
+}

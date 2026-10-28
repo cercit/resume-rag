@@ -1,0 +1,27 @@
+{
+  "file_name": "Resume_Meera_Iyer",
+  "role_line": "Senior Teacher, Mathematics",
+  "contact": {"name": "Meera Iyer", "location": "Chennai", "phone": "+91 94440 57812", "email": "meera.iyer.ux@example.com",
+    "links": [{"label": "meeraiyer.design", "url": "https://meeraiyer.design"}]},
+  "summary": ["Mathematics teacher for 9 years who moved into UX research and design through the Google UX Design Certificate. I have run interviews and usability tests for two volunteer projects and want to join a product team as a junior UX researcher."],
+  "skills": [["User research", "interviews, usability testing, surveys, affinity mapping"], ["Design", "wireframes and prototypes in Figma, user flows"], ["Teaching skills that carry over", "explaining complex ideas simply, running workshops, giving feedback"], ["Data", "Google Sheets, basic SQL"]],
+  "tools": "Figma, FigJam, Google Forms, Google Sheets, Miro, Notion, SQL",
+  "order": ["portfolio", "experience"],
+  "experience": [
+    {"company": "Padma Seshadri Bala Bhavan", "title": "Senior Teacher, Mathematics", "dates": "Jun 2017 – Present | Chennai",
+     "bullets": ["Teach mathematics to 4 sections of Class 9 and 10, about 160 students a year.", "Ran a survey of 220 parents and students on online homework and used the results to change the homework format; late submissions fell from 30% to 12%.", "Trained 14 teachers on Google Classroom during the 2020 lockdown."]}
+  ],
+  "portfolio": [
+    {"name": "Clinic booking redesign (volunteer, Arogya Trust)", "date": "2026", "link": "meeraiyer.design/clinic",
+     "bullets": ["Interviewed 8 patients and 3 front-desk staff about booking appointments by phone.", "Built a Figma prototype for SMS booking and ran 6 usability tests; task success rose from 3 of 6 to 6 of 6 after two rounds of changes."]},
+    {"name": "Library app usability study (Google UX Design Certificate)", "date": "2025", "link": "meeraiyer.design/library",
+     "bullets": ["Wrote a test plan, ran 5 moderated tests and grouped findings in an affinity map in FigJam.", "Turned the top 4 findings into design changes and a short report for the course review."]}
+  ],
+  "education": [{"title": "Google UX Design Certificate", "dates": "2025", "place": "Google / Coursera"},
+                {"title": "M.Sc., Mathematics", "dates": "2014 – 2016", "place": "Stella Maris College, Chennai"},
+                {"title": "B.Ed.", "dates": "2016 – 2017", "place": "Lady Willingdon IASE, Chennai"}],
+  "certifications": "Google UX Design Certificate (2025)",
+  "languages": "English, Tamil",
+  "hobbies": "Carnatic music",
+  "jd_keywords": []
+}

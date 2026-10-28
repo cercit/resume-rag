@@ -1,0 +1,284 @@
+<title>Resume RAG Framework</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a wide flow diagram in its own scroll box; step lists with "runs where" chips. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --fg: #17202c;
+  --muted: #586374;
+  --line: #d6dbe3;
+  --accent: #0b57b0;        /* the link blue from Sameer's resume template */
+  --accent-soft: #e4edf9;
+  --guard: #9a5b00;
+  --guard-soft: #fbf0dd;
+  --ok: #1f7a4a;
+  --ok-soft: #e2f3ea;
+  --todo: #8a3b2e;
+  --todo-soft: #f8e6e2;
+  --display: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161d; --surface: #18202a; --fg: #e6ebf2; --muted: #9aa6b6; --line: #2c3746;
+    --accent: #7fb0ff; --accent-soft: #1b2b44; --guard: #f0b45a; --guard-soft: #3a2b12;
+    --ok: #6fd39c; --ok-soft: #15301f; --todo: #f09a88; --todo-soft: #3a1d18; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161d; --surface: #18202a; --fg: #e6ebf2; --muted: #9aa6b6; --line: #2c3746;
+  --accent: #7fb0ff; --accent-soft: #1b2b44; --guard: #f0b45a; --guard-soft: #3a2b12;
+  --ok: #6fd39c; --ok-soft: #15301f; --todo: #f09a88; --todo-soft: #3a1d18; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font: 400 17px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 64px;
+}
+.wrap { max-width: 900px; margin: 0 auto; display: grid; gap: 48px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 800; line-height: 1.1; }
+h2 { font-size: 24px; font-weight: 700; }
+h3 { font-size: 17px; font-weight: 700; }
+p { margin: 0; max-width: 66ch; }
+.lede { color: var(--muted); font-size: 19px; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+section { display: grid; gap: 16px; }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+code { background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+
+.idea { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.idea div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid; gap: 6px; align-content: start; }
+.idea b { font-family: var(--display); font-size: 15px; }
+.idea span { color: var(--muted); font-size: 15px; }
+@media (max-width: 640px) { .idea { grid-template-columns: 1fr; } }
+
+.diagram { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.diagram svg { display: block; width: 100%; min-width: 760px; height: auto; }
+.box { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.box.db { fill: var(--accent-soft); stroke: var(--accent); }
+.box.llm { fill: var(--accent-soft); stroke: var(--accent); }
+.box.guard { fill: var(--guard-soft); stroke: var(--guard); }
+.box.user { fill: var(--ok-soft); stroke: var(--ok); }
+.t1 { fill: var(--fg); font: 700 14px var(--display); }
+.t2 { fill: var(--muted); font: 400 12px var(--mono); }
+.lane { fill: var(--muted); font: 600 11px var(--mono); letter-spacing: 0.1em; }
+.arrow { stroke: var(--muted); stroke-width: 1.6; fill: none; }
+.arrowhead { fill: var(--muted); }
+.lanebg { fill: var(--bg); }
+
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: s; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.steps li::before { content: counter(s); font: 700 15px/30px var(--display); text-align: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); }
+.steps .body { display: grid; gap: 4px; min-width: 0; }
+.steps .head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.steps p { color: var(--muted); font-size: 16px; }
+.chip { font: 600 11px/1 var(--mono); letter-spacing: 0.04em; padding: 5px 8px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--line); color: var(--muted); }
+.chip.pc { color: var(--ok); border-color: var(--ok); }
+.chip.browser { color: var(--ok); border-color: var(--ok); }
+.chip.fn { color: var(--accent); border-color: var(--accent); }
+.chip.ai { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.chip.db { color: var(--accent); border-color: var(--accent); }
+
+.guards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.guards div { background: var(--guard-soft); border-left: 3px solid var(--guard); border-radius: 0 8px 8px 0; padding: 12px 14px; display: grid; gap: 4px; }
+.guards b { font-family: var(--display); font-size: 15px; }
+.guards span { font-size: 15px; color: var(--fg); }
+@media (max-width: 640px) { .guards { grid-template-columns: 1fr; } }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 12px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 14px; white-space: nowrap; }
+
+.status { display: grid; gap: 8px; }
+.row { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.pill { font: 600 11px/1 var(--mono); padding: 5px 8px; border-radius: 999px; text-align: center; }
+.pill.done { background: var(--ok-soft); color: var(--ok); }
+.pill.you { background: var(--todo-soft); color: var(--todo); }
+.pill.me { background: var(--accent-soft); color: var(--accent); }
+.row span:last-child { font-size: 15px; }
+footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:14px">
+    <div class="eyebrow">cercit / resume-rag</div>
+    <h1>How the resume tailor works</h1>
+    <p class="lede">A visitor gives their resume and a job description. The tool looks up writing advice from your notes, asks an AI to rewrite the resume for that job, checks the result, and prints it in your 2-page format.</p>
+  </header>
+
+  <section>
+    <div class="eyebrow">The idea in three parts</div>
+    <h2>What RAG means here</h2>
+    <div class="idea">
+      <div><b>Retrieve</b><span>Find the 8 most relevant passages from your 9 career documents, plus 3 bullet-writing tips, by meaning, not keywords.</span></div>
+      <div><b>Augment</b><span>Put those passages into the AI's instructions, clearly labelled as writing advice and never as facts about the person.</span></div>
+      <div><b>Generate</b><span>The AI writes the tailored resume as structured data. Every fact comes from the visitor's own resume text.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Overview</div>
+    <h2>The whole flow</h2>
+    <div class="diagram" role="img" aria-label="Flow: your notes are chunked and stored once. Each visitor's resume becomes text in the browser, the generate function retrieves advice, the AI writes JSON, guards check it, it is saved, and the browser prints the PDF.">
+      <svg viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="arrowhead"/>
+          </marker>
+        </defs>
+        <rect x="0" y="0" width="960" height="130" rx="8" class="lanebg"/>
+        <text x="16" y="22" class="lane">ONCE, ON YOUR PC (AND WHENEVER NOTES CHANGE)</text>
+        <rect x="20" y="40" width="200" height="66" rx="8" class="box"/>
+        <text x="36" y="66" class="t1">knowledge/</text>
+        <text x="36" y="88" class="t2">9 files: 6 md, 3 pdf</text>
+        <rect x="270" y="40" width="200" height="66" rx="8" class="box"/>
+        <text x="286" y="66" class="t1">ingest.py</text>
+        <text x="286" y="88" class="t2">chunk + gte-small (384)</text>
+        <rect x="520" y="40" width="200" height="66" rx="8" class="box db"/>
+        <text x="536" y="66" class="t1">documents table</text>
+        <text x="536" y="88" class="t2">230 chunks, pgvector</text>
+        <path d="M220,73 L268,73" class="arrow" marker-end="url(#ah)"/>
+        <path d="M470,73 L518,73" class="arrow" marker-end="url(#ah)"/>
+
+        <text x="16" y="160" class="lane">EVERY VISITOR</text>
+        <rect x="20" y="176" width="200" height="66" rx="8" class="box user"/>
+        <text x="36" y="202" class="t1">Browser</text>
+        <text x="36" y="224" class="t2">PDF/DOCX → plain text</text>
+        <rect x="270" y="176" width="200" height="66" rx="8" class="box"/>
+        <text x="286" y="202" class="t1">generate function</text>
+        <text x="286" y="224" class="t2">checks login + daily cap</text>
+        <rect x="520" y="176" width="200" height="66" rx="8" class="box db"/>
+        <text x="536" y="202" class="t1">match_documents</text>
+        <text x="536" y="224" class="t2">top 8 + 3 bullet tips</text>
+        <rect x="750" y="176" width="190" height="66" rx="8" class="box llm"/>
+        <text x="766" y="202" class="t1">AI (OpenRouter)</text>
+        <text x="766" y="224" class="t2">text in, JSON out</text>
+        <path d="M220,209 L268,209" class="arrow" marker-end="url(#ah)"/>
+        <path d="M470,209 L518,209" class="arrow" marker-end="url(#ah)"/>
+        <path d="M720,209 L748,209" class="arrow" marker-end="url(#ah)"/>
+        <path d="M620,106 L620,174" class="arrow" marker-end="url(#ah)"/>
+
+        <rect x="750" y="310" width="190" height="66" rx="8" class="box guard"/>
+        <text x="766" y="336" class="t1">Guards</text>
+        <text x="766" y="358" class="t2">facts, words, schema</text>
+        <rect x="520" y="310" width="200" height="66" rx="8" class="box db"/>
+        <text x="536" y="336" class="t1">save_version</text>
+        <text x="536" y="358" class="t2">session + version 1</text>
+        <rect x="20" y="310" width="200" height="66" rx="8" class="box user"/>
+        <text x="36" y="336" class="t1">Your template</text>
+        <text x="36" y="358" class="t2">render.js → 2-page PDF</text>
+        <path d="M845,242 L845,308" class="arrow" marker-end="url(#ah)"/>
+        <path d="M750,343 L722,343" class="arrow" marker-end="url(#ah)"/>
+        <path d="M520,343 L222,343" class="arrow" marker-end="url(#ah)"/>
+        <text x="300" y="334" class="t2">tailored resume JSON</text>
+      </svg>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Part 1, run once</div>
+    <h2>Loading your notes into the database</h2>
+    <ol class="steps">
+      <li><div class="body"><div class="head"><h3>Read the documents</h3><span class="chip pc">your PC</span></div><p>Markdown and text are read as they are. PDFs are turned into text. Images and image folders are skipped, and image links are removed.</p></div></li>
+      <li><div class="body"><div class="head"><h3>Cut into chunks</h3><span class="chip pc">your PC</span></div><p>Split at headings, then any long section is cut at about 2,800 characters with 300 characters of overlap. Each chunk keeps its file title and heading. Reference lists are dropped.</p></div></li>
+      <li><div class="body"><div class="head"><h3>Tag a topic</h3><span class="chip pc">your PC</span></div><p><code>bullets</code> for the XYZ formula and examples, <code>ats</code> for parsing tips, <code>research</code> for hiring reports and papers, <code>general</code> for the rest.</p></div></li>
+      <li><div class="body"><div class="head"><h3>Turn each chunk into numbers</h3><span class="chip pc">your PC</span></div><p>The gte-small model gives each chunk a list of 384 numbers that captures its meaning. Similar ideas get similar numbers.</p></div></li>
+      <li><div class="body"><div class="head"><h3>Store and verify</h3><span class="chip db">Supabase</span></div><p>Chunks go into the <code>documents</code> table. A check embeds one chunk again on the server and confirms the database finds that same chunk (similarity 0.9999999).</p></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="eyebrow">Part 2, every visitor</div>
+    <h2>Making one tailored resume</h2>
+    <ol class="steps">
+      <li><div class="body"><div class="head"><h3>Sign in with an email code</h3><span class="chip browser">browser</span></div><p>No passwords. Everything after this needs a signed-in user.</p></div></li>
+      <li><div class="body"><div class="head"><h3>Resume becomes text</h3><span class="chip browser">browser</span></div><p>The browser reads the PDF or DOCX and shows the text so the person can fix it. A scanned file with no text asks them to paste it instead. Files never leave the browser; only text is sent.</p></div></li>
+      <li><div class="body"><div class="head"><h3>Check the daily cap first</h3><span class="chip fn">generate</span></div><p>3 sessions per person per day. Checked before any AI call, so a blocked person costs nothing.</p></div></li>
+      <li><div class="body"><div class="head"><h3>Pull out the facts</h3><span class="chip ai">AI, fast model</span></div><p>The AI turns the resume text into a profile: jobs, titles, dates, bullets, tools, education. Only what is written, nothing inferred.</p></div></li>
+      <li><div class="body"><div class="head"><h3>Find relevant advice</h3><span class="chip db">match_documents</span></div><p>The job description is turned into the same kind of numbers. The database returns the 8 closest chunks from your notes, plus the 3 closest bullet-writing tips.</p></div></li>
+      <li><div class="body"><div class="head"><h3>Write the tailored resume</h3><span class="chip ai">AI, strong model</span></div><p>The AI gets the profile, the job description, the advice and your /human writing rules. It reorders and rewords bullets to match the job, and returns JSON in your template's shape.</p></div></li>
+      <li><div class="body"><div class="head"><h3>Check and save</h3><span class="chip fn">generate</span></div><p>Guards check the result (next section). It is saved as version 1 of the session.</p></div></li>
+      <li><div class="body"><div class="head"><h3>Print in your format</h3><span class="chip browser">browser</span></div><p><code>render.js</code> is a line-by-line port of your <code>build_resume.py</code>. It tightens spacing in 5 steps until the resume fits 2 A4 pages, then the person saves it as a PDF.</p></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="eyebrow">Safety</div>
+    <h2>Guards that run in code, not just in the prompt</h2>
+    <div class="guards">
+      <div><b>No invented facts</b><span>Every number, employer, title, tool and seniority word must appear in the visitor's own resume text.</span></div>
+      <div><b>Locked fields</b><span>Name, contact, education, certifications and job titles are copied from the profile, never from the AI.</span></div>
+      <div><b>Plain writing</b><span>Banned words such as "leveraging" or "spearheaded" are caught. Odd hyphens and curly quotes are cleaned.</span></div>
+      <div><b>Valid shape</b><span>The JSON is checked against a schema. One retry lists every problem; after that, bad lines are removed.</span></div>
+      <div><b>Notes are advice only</b><span>Retrieved chunks are labelled "writing guidance, not facts about the candidate".</span></div>
+      <div><b>Text only</b><span>The AI never receives a file or image. Instructions hidden in a resume or job description are treated as text.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">After the first draft</div>
+    <h2>Tweaks and limits</h2>
+    <p>A person can ask for changes like "shorten the summary" or "put the Python project first". The AI changes only the parts that need it, the same guards run, and a new version is saved. Undo goes back one version.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Rule</th><th>Value</th><th>Enforced in</th></tr></thead>
+        <tbody>
+          <tr><td>Tweaks per session</td><td class="num">10</td><td>Database function <code>save_version</code></td></tr>
+          <tr><td>Sessions per person per day</td><td class="num">3</td><td>Checked before the AI, then <code>start_session</code></td></tr>
+          <tr><td>Undo</td><td class="num">free</td><td><code>undo_version</code>, does not refund a tweak</td></tr>
+          <tr><td>Failed or refused tweak</td><td class="num">not charged</td><td><code>end_work</code> releases the session</td></tr>
+          <tr><td>Two tweaks at once</td><td class="num">1 runs</td><td><code>begin_work</code> lock, the other gets "still working"</td></tr>
+          <tr><td>"Add 5 years of Kubernetes"</td><td class="num">refused</td><td>Guards, not charged</td></tr>
+          <tr><td>Data kept</td><td class="num">7 days</td><td>Nightly <code>purge-old-sessions</code> job</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Parts list</div>
+    <h2>What runs where</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Part</th><th>Service</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td>Website</td><td>GitHub Pages</td><td>Plain HTML and JS in <code>web/</code>, no build step</td></tr>
+          <tr><td>Sign-in</td><td>Supabase Auth</td><td>6-digit email code, 10 minutes</td></tr>
+          <tr><td>Functions</td><td>Supabase Edge Functions</td><td><code>generate</code>, <code>tweak</code>, <code>rag-check</code></td></tr>
+          <tr><td>Database</td><td>Supabase Postgres</td><td>pgvector, row-level security, project <span class="mono">jkionnbbtnwloavmhcdn</span></td></tr>
+          <tr><td>Embeddings</td><td>gte-small</td><td>Same model on your PC and on the server</td></tr>
+          <tr><td>AI</td><td>OpenRouter</td><td>Nemotron free models; first token in about 0.7 to 3 s</td></tr>
+          <tr><td>Keys</td><td>.env and Supabase secrets</td><td>Never in the website or the repo</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Status</div>
+    <h2>Where the build stands</h2>
+    <div class="status">
+      <div class="row"><span class="pill done">done</span><span>Code built and tested offline: 37 tests and 14 browser checks</span></div>
+      <div class="row"><span class="pill done">done</span><span>Functions deployed; anyone not signed in is rejected</span></div>
+      <div class="row"><span class="pill done">done</span><span>Database schema live, row-level security on, linter clean</span></div>
+      <div class="row"><span class="pill done">done</span><span>230 chunks loaded and similarity check passed</span></div>
+      <div class="row"><span class="pill done">done</span><span>Live tests: 21 of 21 pass, including a real tailored resume and refused fake-fact tweaks</span></div>
+      <div class="row"><span class="pill done">done</span><span>Brevo SMTP and the 6-digit code email; test invite arrived</span></div>
+      <div class="row"><span class="pill me">note</span><span>A full resume takes about 1 minute on the free AI models; tweaks about 5 s</span></div>
+      <div class="row"><span class="pill you">you</span><span>Decide on making the repo public and turning on Pages</span></div>
+    </div>
+  </section>
+
+  <footer>Built from INSTRUCTIONS.md and running_note.md in the private repo cercit/resume-rag.</footer>
+</div>
