@@ -77,6 +77,8 @@ async function guarded(
     try {
       raw = parseJsonObject(text);
     } catch (e) {
+      // Log the shape of the failure (length and how the reply ends), never the reply itself.
+      console.warn(`attempt ${i + 1}: not JSON (${(e as Error).message}); reply ${text.length} chars, ends with "}": ${text.trimEnd().endsWith("}")}`);
       feedback = describe({ schema: `not valid JSON (${(e as Error).message})`, ungrounded: [], banned: [] });
       continue;
     }
@@ -85,6 +87,7 @@ async function guarded(
       resume = toResume(raw);
     } catch (e) {
       const msg = (e as { issues?: unknown }).issues ? zodMessage(e as never) : (e as Error).message;
+      console.warn(`attempt ${i + 1}: schema: ${msg.slice(0, 400)}`);
       feedback = describe({ schema: msg, ungrounded: [], banned: [] });
       continue;
     }
