@@ -8,6 +8,7 @@ export interface LLMCall {
   user: string;
   maxTokens: number;
   effort?: "low" | "medium" | "high";
+  timeoutMs?: number; // time left in the request budget; default 110 s
 }
 
 export type LLMFn = (c: LLMCall) => Promise<string>;
@@ -24,17 +25,18 @@ export const MODEL_TWEAK = () => Deno.env.get("LLM_MODEL_TWEAK") ?? "nvidia/nemo
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // 429 and 5xx get one retry after 2 seconds; after that the caller shows "busy, try again".
-async function post(url: string, headers: Record<string, string>, body: unknown): Promise<Response> {
+async function post(url: string, headers: Record<string, string>, body: unknown, timeoutMs = 110_000): Promise<Response> {
+  const until = Date.now() + timeoutMs;
   for (let attempt = 0; ; attempt++) {
     let res: Response;
     try {
-      res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(110_000) });
+      res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(Math.max(1000, until - Date.now())) });
     } catch (e) {
-      if (attempt === 0) { await sleep(2000); continue; }
+      if (attempt === 0 && until - Date.now() > 20_000) { await sleep(2000); continue; }
       throw new LLMError(`LLM network error: ${(e as Error).message}`, "busy");
     }
     if (res.ok) return res;
-    if ((res.status === 429 || res.status >= 500) && attempt === 0) {
+    if ((res.status === 429 || res.status >= 500) && attempt === 0 && until - Date.now() > 20_000) {
       await res.body?.cancel();
       await sleep(2000);
       continue;
@@ -65,8 +67,13 @@ async function openrouter(c: LLMCall): Promise<string> {
     // and returned no answer (finish_reason length, 93 s). Off: valid JSON in 10-13 s on both models.
     // Set the LLM_REASONING secret to "on" to let the model think again.
     reasoning: { enabled: (Deno.env.get("LLM_REASONING") ?? "off") === "on" },
-  });
-  const data = await res.json();
+  }, c.timeoutMs);
+  let data;
+  try {
+    data = await res.json(); // the timeout also covers reading the reply body
+  } catch (e) {
+    throw new LLMError(`LLM reply not read: ${(e as Error).name}`, "busy");
+  }
   if (data.error) throw new LLMError(`LLM error: ${JSON.stringify(data.error).slice(0, 300)}`, "busy");
   // reasoning models also return a `reasoning` field; only the answer is used
   const text = data.choices?.[0]?.message?.content;

@@ -21,7 +21,8 @@ export function serve(run: (body: Record<string, unknown>, deps: Deps) => Promis
       return json(req, r.body, r.status);
     } catch (e) {
       console.error(e instanceof LLMError ? `LLM ${e.kind}: ${e.message}` : e);
-      if (e instanceof LLMError && e.kind === "busy") {
+      // A timeout means the AI was too slow for the 150 s function limit: treat it as busy, not broken.
+      if ((e instanceof LLMError && e.kind === "busy") || (e as Error)?.name === "TimeoutError") {
         return json(req, { error: "llm_busy", message: `The AI service is busy. Try again in a minute. ${failMessage.includes("tweak") ? "You were not charged a tweak." : ""}`.trim() }, 503);
       }
       return json(req, { error: "server_error", message: failMessage }, 502);

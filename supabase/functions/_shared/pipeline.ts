@@ -62,16 +62,31 @@ function describe(p: Problems): string {
   return lines.join("\n");
 }
 
-// Run the LLM, parse, validate and guard. One retry with the exact problems listed.
-// onStillBad decides what to do when the retry is still not clean.
+// Supabase stops a function at about 150 s. Each request gets one 140 s budget; every LLM call is
+// given only the time left. Live run 2026-10-28: a long resume on slow free models hit the 150 s wall.
+export interface Budget { left(): number }
+export const budget = (ms = 140_000): Budget => {
+  const end = Date.now() + ms;
+  return { left: () => Math.max(1000, end - Date.now()) };
+};
+const RETRY_NEEDS_MS = 30_000;
+
+// Run the LLM, parse, validate and guard. One retry with the exact problems listed,
+// skipped when the time budget is nearly used up.
 async function guarded(
   attempt: (feedback: string) => Promise<string>,
   toResume: (raw: unknown) => Resume,
   check: (r: Resume) => Problems,
+  time?: Budget,
 ): Promise<{ resume: Resume; problems: Problems; raw: unknown }> {
   let feedback = "";
   let last: { resume: Resume; problems: Problems; raw: unknown } | null = null;
   for (let i = 0; i < 2; i++) {
+    if (i === 1 && time && time.left() < RETRY_NEEDS_MS) {
+      console.warn(`skipping retry: ${Math.round(time.left() / 1000)} s left`);
+      if (!last) throw new LLMError("Out of time before a valid answer", "busy");
+      break;
+    }
     const text = await attempt(feedback);
     let raw: unknown;
     try {
@@ -113,12 +128,13 @@ const TOKENS = { extract: 6000, generate: 8000, tweak: 4000 };
 
 // ---------- extraction ----------
 
-export async function extractProfile(resumeText: string, deps: Deps): Promise<Profile> {
+export async function extractProfile(resumeText: string, deps: Deps, time: Budget = budget()): Promise<Profile> {
   const { resume } = await guarded(
     (fb) => deps.llm({ model: deps.models.tweak, system: EXTRACT_SYSTEM, user: withFeedback(extractUser(resumeText), fb),
-      maxTokens: TOKENS.extract, effort: "low" }),
+      maxTokens: TOKENS.extract, effort: "low", timeoutMs: time.left() }),
     (raw) => ProfileSchema.parse(raw) as Resume,
     (r) => ({ ungrounded: findUngrounded(r, resumeText), banned: [] }),
+    time,
   );
   const profile = ProfileSchema.parse(resume);
   // whatever is still not in the resume text after the retry is dropped
@@ -153,18 +169,21 @@ export async function generate(input: { resume_text?: unknown; jd_text?: unknown
     return fail(429, "daily_session_limit", "You have used today's 3 sessions. Try again tomorrow.");
   }
 
-  const profile = await extractProfile(resumeText, deps);
+  const time = budget();
+  const profile = await extractProfile(resumeText, deps, time);
   const guidance = await guidanceFor(jd, deps);
   let gaps: string[] = [];
   const { resume, problems } = await guarded(
     (fb) => deps.llm({ model: deps.models.generate, system: TAILOR_SYSTEM,
-      user: withFeedback(tailorUser(profile, jd, guidance), fb), maxTokens: TOKENS.generate, effort: "medium" }),
+      user: withFeedback(tailorUser(profile, jd, guidance), fb), maxTokens: TOKENS.generate, effort: "medium",
+      timeoutMs: time.left() }),
     (raw) => {
       const obj = raw as { resume?: unknown; gaps?: unknown };
       gaps = Array.isArray(obj.gaps) ? obj.gaps.filter((g): g is string => typeof g === "string").slice(0, 10) : [];
       return lockFacts(ResumeSchema.parse(obj.resume ?? raw), profile);
     },
     (r) => ({ ungrounded: findUngrounded(r, resumeText, jd), banned: bannedHits(allText(r)) }),
+    time,
   );
   // still not clean after the retry: drop what cannot be grounded, swap leftover banned words
   let final = problems.ungrounded.length ? removeUngrounded(resume, problems.ungrounded, profile) : resume;
@@ -268,9 +287,11 @@ export async function tweak(input: { session_id?: unknown; instruction?: unknown
     const guidance = NEEDS_RAG.test(instruction) ? await guidanceFor(`${instruction}\n${s.jd_text}`, deps) : [];
 
     let refused = false;
+    const time = budget();
     const { resume, problems } = await guarded(
       (fb) => deps.llm({ model: deps.models.tweak, system: TWEAK_SYSTEM,
-        user: withFeedback(tweakUser(current, profile, instruction, guidance), fb), maxTokens: TOKENS.tweak, effort: "low" }),
+        user: withFeedback(tweakUser(current, profile, instruction, guidance), fb), maxTokens: TOKENS.tweak, effort: "low",
+        timeoutMs: time.left() }),
       (raw) => {
         const obj = raw as Record<string, unknown>;
         if (typeof obj.refused === "string") { refused = true; return current; }
@@ -279,6 +300,7 @@ export async function tweak(input: { session_id?: unknown; instruction?: unknown
       },
       (r) => (refused ? { ungrounded: [], banned: [] }
         : { ungrounded: findUngrounded(r, source_text, s.jd_text), banned: bannedHits(allText(r)) }),
+      time,
     );
     if (refused) {
       console.warn("tweak refused by model");
