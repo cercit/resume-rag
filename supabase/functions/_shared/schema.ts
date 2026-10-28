@@ -66,6 +66,21 @@ function dropNulls(v: unknown): unknown {
   return v;
 }
 
+// A bullet or summary line given as an object ({"text": "..."}, {"bullet": "...", "impact": "..."}) becomes text.
+// Live run 2026-10-28: a real resume came back with every bullet as an object.
+function asText(v: unknown): unknown {
+  if (!isObj(v)) return v;
+  for (const k of ["text", "bullet", "description", "content", "value", "line", "summary", "achievement"]) {
+    if (typeof v[k] === "string") return v[k];
+  }
+  const parts = Object.values(v).filter((x): x is string => typeof x === "string");
+  return parts.length ? parts.join(" ") : v;
+}
+const asTextList = (v: unknown) => {
+  const l = asList(v);
+  return Array.isArray(l) ? l.map(asText) : l;
+};
+
 function toSkillPair(s: unknown): [string, string] | null {
   if (Array.isArray(s)) return s.length ? [String(s[0] ?? ""), s.slice(1).map(String).join(", ")] : null;
   if (isObj(s)) {
@@ -83,14 +98,14 @@ function toSkillPair(s: unknown): [string, string] | null {
 export function tidy(raw: unknown): unknown {
   const r = dropNulls(raw);
   if (!isObj(r)) return r;
-  r.summary = asList(r.summary);
+  r.summary = asTextList(r.summary);
   if (Array.isArray(r.skills)) r.skills = r.skills.map(toSkillPair).filter((x) => x !== null);
   for (const k of ["tools", "certifications", "languages", "hobbies"]) r[k] = joinList(r[k], k === "certifications" ? " · " : ", ");
   if (isObj(r.contact) && Array.isArray(r.contact.links)) {
     r.contact.links = r.contact.links.map((l) => (typeof l === "string" ? { label: l, url: l } : l));
   }
   for (const k of ["experience", "portfolio"]) {
-    if (Array.isArray(r[k])) r[k] = (r[k] as unknown[]).filter(isObj).map((e) => ({ ...e, bullets: asList(e.bullets) }));
+    if (Array.isArray(r[k])) r[k] = (r[k] as unknown[]).filter(isObj).map((e) => ({ ...e, bullets: asTextList(e.bullets) }));
   }
   if (typeof r.jd_keywords === "string") r.jd_keywords = r.jd_keywords.split(",").map((s) => s.trim()).filter(Boolean);
   return r;
@@ -108,14 +123,26 @@ const ProfileObject = ResumeObject.extend({
 export const ProfileSchema = z.preprocess(tidy, ProfileObject);
 export type Profile = z.output<typeof ProfileObject>;
 
-// Pull the first JSON object out of a model reply (it may wrap it in a code fence).
+// Pull the first complete JSON object out of a model reply. It may sit in a code fence, and the model
+// may add text after it. Live run 2026-10-28: a valid 8,903-character object was followed by extra text
+// containing "}", so slicing to the last "}" broke it. Braces are counted outside strings instead.
 export function parseJsonObject(text: string): unknown {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   const raw = fenced ? fenced[1] : text;
   const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start < 0 || end <= start) throw new Error("No JSON object in the reply");
-  return JSON.parse(raw.slice(start, end + 1));
+  if (start < 0) throw new Error("No JSON object in the reply");
+  let depth = 0, inString = false, escaped = false;
+  for (let i = start; i < raw.length; i++) {
+    const c = raw[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (c === "\\") escaped = true;
+      else if (c === '"') inString = false;
+    } else if (c === '"') inString = true;
+    else if (c === "{") depth++;
+    else if (c === "}" && --depth === 0) return JSON.parse(raw.slice(start, i + 1));
+  }
+  throw new Error("JSON object is not closed (reply cut off)");
 }
 
 export function zodMessage(err: z.ZodError): string {

@@ -1,6 +1,27 @@
 // The schema accepts the messy shapes models return for real, long resumes (live failure 2026-10-28).
 import { assertEquals } from "jsr:@std/assert@1.0.8";
-import { ProfileSchema, ResumeSchema } from "../../supabase/functions/_shared/schema.ts";
+import { parseJsonObject, ProfileSchema, ResumeSchema } from "../../supabase/functions/_shared/schema.ts";
+
+Deno.test("parseJsonObject: stops at the first complete object, even with text and braces after it", () => {
+  const reply = 'Here you go:\n{"a": {"b": "x } y"}, "c": "quote \\" inside"}\n\nNote: I kept it short {see above}.';
+  assertEquals(parseJsonObject(reply), { a: { b: "x } y" }, c: 'quote " inside' });
+  assertEquals(parseJsonObject('```json\n{"a": 1}\n```\nextra {}'), { a: 1 });
+  let msg = "";
+  try { parseJsonObject('{"a": [1, 2'); } catch (e) { msg = (e as Error).message; }
+  assertEquals(msg, "JSON object is not closed (reply cut off)");
+});
+
+Deno.test("schema: bullets and summary lines given as objects become text (live failure 2026-10-28)", () => {
+  const r = ResumeSchema.parse({
+    file_name: "R", contact: { name: "T" },
+    summary: [{ text: "First paragraph." }],
+    skills: [["Data", "SQL"]],
+    experience: [{ company: "A", title: "Analyst", dates: "2021", bullets: [
+      { text: "Cut report time by 50%." }, { bullet: "Built a dashboard." }, { action: "Trained", result: "12 staff" }, "Plain bullet."] }],
+  });
+  assertEquals(r.summary, ["First paragraph."]);
+  assertEquals(r.experience[0].bullets, ["Cut report time by 50%.", "Built a dashboard.", "Trained 12 staff", "Plain bullet."]);
+});
 
 const messy = {
   file_name: "Resume_Test",
