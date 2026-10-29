@@ -55,6 +55,9 @@ Rules:
 - A section that is missing becomes an empty string or empty list.
 - Keep job titles, company names, dates, numbers and tool names exactly as written.
 - Each job is its own experience entry with its own company. Keep the bullets as written, one string per bullet.
+- dates: the date range as written. If a place is written next to the dates (for example "Apr 2024 – Present |
+  Chennai"), keep it in dates after " | ". A place is never the intro.
+- intro: a sentence written under the job title before its bullets, if there is one.
 - Projects, side projects, portfolio items or open-source work go in portfolio. If there are none, portfolio is [].
 - contact.links: every URL or profile handle in the header (LinkedIn, GitHub, website), label = the text as written.
 - summary: the resume's own summary or objective paragraphs, as written ([] if none).
@@ -91,11 +94,14 @@ Tailoring:
 - Reorder and trim bullets so the strongest evidence for this JD comes first. Reword only for clarity, or into the
   XYZ pattern (accomplished X, measured by Y, by doing Z) when X, Y and Z are all already in the profile.
 - Every experience and portfolio entry you keep must match one in the profile (same company and title, or same
-  project name). You may drop weak entries and bullets so the resume fits on 2 A4 pages: at most 5 bullets for the
-  most relevant role, fewer for older ones; 1 to 2 short summary paragraphs; 4 to 6 skill pairs.
-- Skill labels are short sentence-case phrases (they may reuse JD wording where true); skill text lists only what
-  the profile shows.
-- Pick "order": ["portfolio","experience"] only when the projects are stronger evidence for this JD than the jobs.
+  project name). Keep every job, with its intro line if it has one. The resume should fill 2 A4 pages: up to 6
+  bullets for the current role, up to 4 for the one before, 2 to 3 for older roles. Keep each bullet as its own
+  item; never merge two bullets into one. Portfolio: at most 3 projects, the most relevant to this JD.
+- Summary: 2 short paragraphs. The first says years, domain and current role, and the work that matches the JD's
+  main duties. The second gives the strongest proof (with numbers) and the kind of role the candidate wants next.
+- Skills: 4 to 6 pairs. Name each group after one of the JD's main duty areas, in the JD's own words where the
+  profile backs it, most important area first. Skill text lists only what the profile shows for that area.
+- "order" is always ["experience","portfolio"].
 - jd_keywords: 10 to 15 exact skill and duty phrases from the JD that the profile can back up.
 - file_name: "Resume_<First>_<Last>_<Company>_<Role>" from the JD, no spaces (this is a file name, not resume text).
 

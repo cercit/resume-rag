@@ -317,3 +317,61 @@ export function keywordNotes(r: Resume) {
   const missing = r.jd_keywords.filter((k) => !flat.includes(k.toLowerCase()));
   return { keywords_found: found, keywords_missing: missing };
 }
+
+// ---------- fine-tune from the first real resume (29 Oct 2026) ----------
+
+// Ligature glyphs from PDF text: "ﬁ" becomes "fi". Live run: "cercit.github.io/ ﬁ nstack/" in the output.
+const LIGATURES: Record<string, string> = {
+  "\uFB00": "ff", "\uFB01": "fi", "\uFB02": "fl", "\uFB03": "ffi", "\uFB04": "ffl", "\uFB05": "st", "\uFB06": "st",
+};
+export function fixLigatures(s: string): string {
+  return s.replace(/[\uFB00-\uFB06]/g, (l) => LIGATURES[l]);
+}
+
+// A job "intro" that is only a place ("Chennai") belongs next to the dates, as the visitor's resume shows it.
+// Live run: the place ended up on its own line under every job title.
+const PLACE = /^[|•·]?\s*(\p{Lu}[\p{L}.'-]*)(,?\s+\p{Lu}[\p{L}.'-]*){0,3}$/u;
+export function placesIntoDates(p: Profile): Profile {
+  const out = structuredClone(p);
+  for (const e of out.experience) {
+    const intro = (e.intro ?? "").trim();
+    if (!intro || intro.length > 40 || /\d/.test(intro) || !PLACE.test(intro)) continue;
+    const place = intro.replace(/^[|•·]\s*/, "");
+    if (!e.dates.includes(place)) e.dates = e.dates ? `${e.dates} | ${place}` : place;
+    e.intro = undefined;
+  }
+  return out;
+}
+
+// Bullets per job by recency: the model cut a 4-bullet role to 2 and older roles to 1, leaving half
+// of page 2 empty. Every job from the profile is kept, in the profile's order; a job the model thinned
+// gets back the visitor's own bullets (as written) that it does not already cover.
+const TARGET = [6, 4, 3];
+const sig = (s: string) => new Set(norm(s).trim().split(" ").filter((w) => w.length >= 4));
+function covered(bullet: string, list: string[]): boolean {
+  const a = sig(bullet);
+  if (!a.size) return true;
+  return list.some((b) => {
+    const bw = sig(b);
+    let n = 0;
+    a.forEach((w) => { if (bw.has(w)) n++; });
+    return n / a.size >= 0.5;
+  });
+}
+export function fillExperience(r: Resume, profile: Profile): Resume {
+  const out: Resume = structuredClone(r);
+  out.experience = profile.experience.map((p, i) => {
+    const e = r.experience.find((x) => key(x.title) === key(p.title) && key(x.company) === key(p.company));
+    const want = Math.min(p.bullets.length, TARGET[Math.min(i, TARGET.length - 1)]);
+    const job = e ? structuredClone(e) : { ...structuredClone(p), bullets: [] as string[] };
+    if (!job.intro && p.intro) job.intro = p.intro;
+    for (const b of p.bullets) {
+      if (job.bullets.length >= want) break;
+      if (!covered(b, job.bullets)) job.bullets.push(b);
+    }
+    return job;
+  });
+  out.portfolio = out.portfolio.slice(0, 3);
+  if (out.experience.length) out.order = ["experience", "portfolio"];
+  return out;
+}

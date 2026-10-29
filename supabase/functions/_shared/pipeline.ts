@@ -4,7 +4,7 @@ import { LLMError, type LLMFn } from "./llm.ts";
 import { parseJsonObject, type Profile, ProfileSchema, type Resume, ResumeSchema, zodMessage } from "./schema.ts";
 import {
   bannedHits, findUngrounded, keywordNotes, lockFacts, removeUngrounded, replaceBanned, stripEmDashes,
-  allText, canonical, cleanAllChars, type Ungrounded,
+  allText, canonical, cleanAllChars, fillExperience, fixLigatures, placesIntoDates, type Ungrounded,
 } from "./guards.ts";
 import { EXTRACT_SYSTEM, extractUser, TAILOR_SYSTEM, tailorUser, TWEAK_SYSTEM, tweakUser } from "./prompts.ts";
 
@@ -139,7 +139,7 @@ export async function extractProfile(resumeText: string, deps: Deps, time: Budge
   const profile = ProfileSchema.parse(resume);
   // whatever is still not in the resume text after the retry is dropped
   const left = findUngrounded(profile as Resume, resumeText);
-  return left.length ? ProfileSchema.parse(removeUngrounded(profile as Resume, left, profile)) : profile;
+  return placesIntoDates(left.length ? ProfileSchema.parse(removeUngrounded(profile as Resume, left, profile)) : profile);
 }
 
 // ---------- retrieval ----------
@@ -156,7 +156,7 @@ async function guidanceFor(query: string, deps: Deps): Promise<Chunk[]> {
 // ---------- generate ----------
 
 export async function generate(input: { resume_text?: unknown; jd_text?: unknown }, deps: Deps): Promise<Result> {
-  const resumeText = typeof input.resume_text === "string" ? input.resume_text.trim() : "";
+  const resumeText = typeof input.resume_text === "string" ? fixLigatures(input.resume_text).trim() : "";
   const jd = typeof input.jd_text === "string" ? input.jd_text.trim() : "";
   if (!resumeText || !jd) return fail(400, "empty_input", "Add your resume text and the job description.");
   if (resumeText.length > LIMITS.resume) return fail(400, "resume_too_long", "Resume text is over 20,000 characters.");
@@ -187,7 +187,8 @@ export async function generate(input: { resume_text?: unknown; jd_text?: unknown
   );
   // still not clean after the retry: drop what cannot be grounded, swap leftover banned words
   let final = problems.ungrounded.length ? removeUngrounded(resume, problems.ungrounded, profile) : resume;
-  final = ResumeSchema.parse(finish(final));
+  // every job kept, thinned jobs topped up with the visitor's own bullets, experience first
+  final = ResumeSchema.parse(finish(fillExperience(final, profile)));
   const stored: StoredProfile = { profile, source_text: resumeText };
 
   let sessionId: string;
