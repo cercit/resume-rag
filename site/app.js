@@ -78,15 +78,6 @@
   function counts() {
     $('resume-count').textContent = `${$('resume-text').value.length.toLocaleString('en-IN')} / 20,000`;
     $('jd-count').textContent = `${$('jd-text').value.length.toLocaleString('en-IN')} / 12,000`;
-    state.sample = $('resume-text').value.trim() === DEMO.sourceResume.trim() && $('jd-text').value.trim() === DEMO.jobDescription.trim();
-    $('sample-notice').hidden = !state.sample;
-    $('generate-button').innerHTML = (state.sample ? 'Run sample demo ' : 'Tailor my resume ') + icon('arrow');
-  }
-  function loadSample() {
-    $('resume-text').value = DEMO.sourceResume;
-    $('jd-text').value = DEMO.jobDescription;
-    selectInputTab('paste'); counts(); message('input-error', '');
-    toast('Fictional sample loaded. No personal data needed.');
   }
   async function readFile(file) {
     if (!file || state.busy) return;
@@ -230,7 +221,6 @@
     $('wait-complete-actions').hidden = true;
     $('ready-shortcut').hidden = true;
     $('pause-tips').disabled = false;
-    $('replay-demo').hidden = !demo;
     message('waiting-error', '');
     setTipsPaused(state.motionOff || reducedMotion.matches);
     showTip(state.tip + 1); showQuiz(state.quiz);
@@ -305,7 +295,6 @@
     $('version-label').textContent = `Version ${state.versions}`;
     $('apply-tweak').disabled = state.tweaksLeft <= 0 || state.busy;
     $('undo-tweak').disabled = state.versions <= 1 || state.busy;
-    $('result-demo-notice').hidden = !state.demo; $('result-replay').hidden = !state.demo;
     chipList('keywords-found', state.notes?.keywords_found); chipList('keywords-missing', state.notes?.keywords_missing);
     $('gaps').replaceChildren(...(state.notes?.gaps || []).map(gap => { const li = document.createElement('li'); li.textContent = gap; return li; }));
     const fit = await window.ResumeRender.fit($('resume-preview'), state.resume);
@@ -324,7 +313,7 @@
     $('apply-tweak').disabled = locked || state.tweaksLeft <= 0;
     $('undo-tweak').disabled = locked || state.versions <= 1;
     $('download-pdf').disabled = locked;
-    $('start-over').disabled = locked; $('result-replay').disabled = locked;
+    $('start-over').disabled = locked;
     $$('[data-tweak]').forEach(button => { button.disabled = locked; });
   }
   function demoTweak(instruction) {
@@ -387,7 +376,6 @@
   async function requestGeneration() {
     if (state.busy || !validation()) return;
     counts();
-    if (state.sample) { beginWaiting(true); return; }
     if (state.session) { beginWaiting(false); return; }
     state.pendingGenerate = true; await openAuth();
   }
@@ -451,7 +439,6 @@
     const rect = dialog.getBoundingClientRect();
     if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
   }));
-  $$('[data-action="demo"]').forEach(button => button.addEventListener('click', () => beginWaiting(true)));
   $('tab-upload').addEventListener('click', () => selectInputTab('upload'));
   $('tab-paste').addEventListener('click', () => selectInputTab('paste'));
   $$('.input-tab').forEach(button => button.addEventListener('keydown', event => {
@@ -459,8 +446,6 @@
       event.preventDefault(); selectInputTab(event.key === 'Home' ? 'upload' : event.key === 'End' ? 'paste' : button.id === 'tab-upload' ? 'paste' : 'upload', true);
     }
   }));
-  $('load-sample').addEventListener('click', loadSample);
-  $('clear-sample').addEventListener('click', () => { $('resume-text').value = ''; $('jd-text').value = ''; counts(); selectInputTab('upload'); });
   ['resume-text', 'jd-text'].forEach(id => $(id).addEventListener('input', counts));
   $('upload-zone').addEventListener('click', () => $('resume-file').click());
   $('resume-file').addEventListener('change', () => readFile($('resume-file').files[0]));
@@ -475,8 +460,6 @@
   $('next-quiz').addEventListener('click', () => showQuiz(state.quiz + 1));
   $('review-result').addEventListener('click', reviewResult);
   $('ready-shortcut').addEventListener('click', reviewResult);
-  $('replay-demo').addEventListener('click', () => beginWaiting(true));
-  $('result-replay').addEventListener('click', () => beginWaiting(true));
   $('apply-tweak').addEventListener('click', applyTweak);
   $('undo-tweak').addEventListener('click', undoTweak);
   $$('[data-tweak]').forEach(button => button.addEventListener('click', () => { $('tweak-text').value = button.dataset.tweak; $('tweak-text').focus(); }));
@@ -529,9 +512,6 @@
     $$('.how-section,.honesty').forEach(el => { el.classList.add('scroll-reveal'); observer.observe(el); });
   }
   counts(); showTip(state.tip); showQuiz(0);
-  // Deep links are deliberate demos; reloading never silently resubmits a personal resume.
-  if (location.hash === '#waiting' || new URLSearchParams(location.search).get('demo') === 'waiting') beginWaiting(true);
-  else if (location.hash === '#result') {
-    Object.assign(state, { demo: true, resume: clone(DEMO.resume), notes: clone(DEMO.notes) }); reviewResult();
-  }
+  // No demo: #waiting and #result only exist during a real request, so a direct link or reload goes to the workspace.
+  if (location.hash === '#waiting' || location.hash === '#result') { history.replaceState(null, '', location.pathname); }
 })();

@@ -20,13 +20,11 @@ No build step or package installation is needed.
 
 ## Try the experience
 
-- **See it in action** starts a 30-second, clearly labelled sample walkthrough.
-- **Use a sample** fills the workspace with a fictional resume and job description.
-- **Review your resume** opens the sample PDF preview, keyword coverage, honest gaps, and edit controls.
-- Sample edits support “shorten the summary”, “put projects first”, and “put experience first”. Other requests are explained without consuming a tweak.
+The sample demo ("See it in action", "Use a sample", Replay and the `/#waiting` and `/#result` demo links) was removed on 29 Oct 2026. Every run is a real, signed-in request.
+
+- **Review your resume** opens the PDF preview, keyword coverage, honest gaps, and edit controls.
 - **Undo** restores the previous version without using another tweak. It does not refund an already completed tweak.
-- **Replay** restarts the timer and stages. It never submits a personal resume.
-- Direct demo links: `/#waiting` and `/#result`. Reloading these links shows the fictional demo, never a re-submitted live request.
+- A direct link or reload of `/#waiting` or `/#result` goes back to the start page. It never re-submits a resume.
 
 ## Waiting page
 

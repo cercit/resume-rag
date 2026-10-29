@@ -1,5 +1,5 @@
 # Publishes site/ (the live website since 29 Oct 2026) to GitHub Pages on every push to main.
-# The work/ folder (design notes, local logs) and START_SITE.cmd are left out of the published copy.
+# work/, START_SITE.cmd, README.md and previews/ (design screenshots) are left out of the published copy.
 name: Deploy web to GitHub Pages
 
 on:
@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir -p _publish
           cp -r site/. _publish/
-          rm -rf _publish/work _publish/START_SITE.cmd
+          rm -rf _publish/work _publish/START_SITE.cmd _publish/README.md _publish/previews
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _publish
