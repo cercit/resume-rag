@@ -32,6 +32,7 @@ export function pgDb(uid: string): Db {
   return {
     sessionsToday: () => asUser(uid, async (tx) =>
       Number((await tx`select count(*) as n from resume_sessions where created_at > now() - interval '24 hours'`)[0].n)),
+    dailyLimit: () => asUser(uid, async (tx) => Number((await tx`select my_daily_limit() as n`)[0].n)),
     startSession: (jd, p) => asUser(uid, async (tx) => (await tx`select start_session(${jd}, ${tx.json(p as never)}) as id`)[0].id),
     saveVersion: (s, j, t) => asUser(uid, async (tx) => {
       const [r] = await tx`select * from save_version(${s}::uuid, ${tx.json(j as never)}, ${t})`;

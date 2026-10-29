@@ -12,6 +12,7 @@ export interface Chunk { id: number; source: string; heading: string; content: s
 
 export interface Db {
   sessionsToday(): Promise<number>;
+  dailyLimit(): Promise<number>;
   startSession(jd: string, profileJson: unknown): Promise<string>;
   saveVersion(session: string, json: unknown, tweak: string | null): Promise<{ version: number; tweaks_used: number }>;
   beginWork(session: string): Promise<boolean>;
@@ -39,7 +40,6 @@ export interface StoredProfile { profile: Profile; source_text: string }
 export interface Result { status: number; body: Record<string, unknown> }
 
 export const LIMITS = { resume: 20_000, jd: 12_000, instruction: 300, minResume: 200 };
-const DAILY_SESSIONS = 3;
 
 // DB errors raised by the SQL functions (raise exception 'daily_session_limit' etc.)
 export class DbError extends Error {}
@@ -165,8 +165,11 @@ export async function generate(input: { resume_text?: unknown; jd_text?: unknown
     return fail(400, "resume_too_short", "This looks like a scan. Paste your resume text instead.");
   }
   // cheap early check so a 4th session does not spend LLM calls; start_session enforces it for real
-  if ((await deps.db.sessionsToday()) >= DAILY_SESSIONS) {
-    return fail(429, "daily_session_limit", "You have used today's 3 sessions. Try again tomorrow.");
+  // 3 a day unless an admin raised it (user_limits, 0003_admin.sql)
+  const limit = await deps.db.dailyLimit();
+  const limitMessage = `You have used today's ${limit} resume${limit === 1 ? "" : "s"}. Try again tomorrow.`;
+  if ((await deps.db.sessionsToday()) >= limit) {
+    return fail(429, "daily_session_limit", limitMessage);
   }
 
   const time = budget();
@@ -196,7 +199,7 @@ export async function generate(input: { resume_text?: unknown; jd_text?: unknown
     sessionId = await deps.db.startSession(jd, stored);
   } catch (e) {
     if (e instanceof DbError && e.message === "daily_session_limit") {
-      return fail(429, "daily_session_limit", "You have used today's 3 sessions. Try again tomorrow.");
+      return fail(429, "daily_session_limit", limitMessage);
     }
     throw e;
   }

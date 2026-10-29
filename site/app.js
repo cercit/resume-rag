@@ -253,7 +253,7 @@
     announce('Your resume is ready. Use Review your resume to continue.');
   }
   function friendlyError(error) {
-    const errors = { daily_session_limit: 'You have used today\'s 3 sessions. Please try again tomorrow.', tweak_limit_reached: 'All 10 tweaks have been used. You can still undo or download.', busy: 'The previous request is still being processed. Please wait before trying again.', not_signed_in: 'Your sign-in has expired. Please sign in again.', nothing_to_undo: 'There is no earlier version to restore.', llm_busy: 'The AI service is busy right now. Wait a minute and try again. Your inputs are still here, and no tweak was used.' };
+    const errors = { tweak_limit_reached: 'All 10 tweaks have been used. You can still undo or download.', busy: 'The previous request is still being processed. Please wait before trying again.', not_signed_in: 'Your sign-in has expired. Please sign in again.', nothing_to_undo: 'There is no earlier version to restore.', llm_busy: 'The AI service is busy right now. Wait a minute and try again. Your inputs are still here, and no tweak was used.' };
     return errors[error.code] || (error.status >= 500 ? 'The resume service could not finish this time. Your inputs are still here.' : error.message) || 'Something did not finish. Please try again.';
   }
   function failWaiting(error) {
@@ -390,7 +390,6 @@
   }
 
   // Profile: resumes left today, recent resumes (kept 7 days), optional name and username.
-  const DAILY = 3;
   function resumeLabel(resume) {
     const nameWords = new Set(String(resume?.contact?.name || '').toLowerCase().split(/\s+/));
     const words = String(resume?.file_name || '').replace(/^Resume_/, '').split('_').filter(w => w && !nameWords.has(w.toLowerCase()));
@@ -411,12 +410,12 @@
     $('profile-resumes').replaceChildren();
     $('profile-dialog').showModal();
     try {
-      const [profile, rows] = await Promise.all([API.getProfile(), API.myResumes()]);
+      const [profile, rows, daily] = await Promise.all([API.getProfile(), API.myResumes(), API.myLimit()]);
       state.profileName = profile.full_name || '';
       $('profile-name').value = profile.full_name || ''; $('profile-username').value = profile.username || '';
       $('profile-title').textContent = state.profileName ? `Hello, ${state.profileName}.` : 'Hello.';
       const today = rows.filter(r => Date.now() - new Date(r.created_at).getTime() < 24 * 3600 * 1000).length;
-      $('profile-left').textContent = `${Math.max(0, DAILY - today)} of ${DAILY}`;
+      $('profile-left').textContent = `${Math.max(0, daily - today)} of ${daily}`;
       $('profile-count').textContent = String(rows.length);
       if (!rows.length) { const li = document.createElement('li'); li.className = 'empty'; li.textContent = 'No resumes yet. Your tailored resumes show here for 7 days.'; $('profile-resumes').append(li); }
       rows.forEach(row => {

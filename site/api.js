@@ -246,6 +246,27 @@
     return result.data || [];
   }
 
+  async function rpc(name, args, fallback) {
+    const client = await existingClient();
+    const result = await client.rpc(name, args || {});
+    if (result.error) {
+      if (result.error.code === "42501" || result.error.message === "not_admin") throw failure("not_admin", "This account is not an admin.", 403);
+      throw failure(result.error.message || "request_failed", fallback, result.status);
+    }
+    return result.data;
+  }
+
+  async function myLimit() {
+    try { return Number(await rpc("my_daily_limit", {}, "")) || 3; } catch (error) { return 3; }
+  }
+  function isAdmin() { return rpc("is_admin", {}, "Could not check admin access."); }
+  async function adminUsers() { return (await rpc("admin_users", {}, "Could not load users.")) || []; }
+  function adminSetLimit(userId, limit) {
+    limit = Number(limit);
+    if (!Number.isInteger(limit) || limit < 0 || limit > 50) return Promise.reject(failure("bad_limit", "Use a whole number from 0 to 50."));
+    return rpc("admin_set_limit", { p_user: userId, p_limit: limit }, "Could not save the limit.");
+  }
+
   function tidy(text) {
     const ligatures = { "ﬀ": "ff", "ﬁ": "fi", "ﬂ": "fl", "ﬃ": "ffi", "ﬄ": "ffl", "ﬅ": "st", "ﬆ": "st" };
     return String(text || "").replace(/[ﬀ-ﬆ]/g, function (l) { return ligatures[l]; }).replace(/\r/g, "").replace(/[ \t]+\n/g, "\n").replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
@@ -326,6 +347,10 @@
     getProfile: getProfile,
     saveProfile: saveProfile,
     myResumes: myResumes,
+    myLimit: myLimit,
+    isAdmin: isAdmin,
+    adminUsers: adminUsers,
+    adminSetLimit: adminSetLimit,
     extract: extract
   };
 })(window);

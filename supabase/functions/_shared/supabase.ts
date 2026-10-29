@@ -40,6 +40,11 @@ export function makeDb(c: SupabaseClient): Db {
       if (error) throw new DbError(error.message);
       return count ?? 0;
     },
+    async dailyLimit() {
+      // falls back to the default 3 if the database does not have my_daily_limit yet
+      const { data, error } = await c.rpc("my_daily_limit");
+      return error || typeof data !== "number" ? 3 : data;
+    },
     async startSession(jd, profileJson) {
       return check(await c.rpc("start_session", { p_jd: jd, p_profile: profileJson })) as string;
     },

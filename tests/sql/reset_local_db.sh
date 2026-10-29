@@ -8,3 +8,4 @@ $P -c "create database t1"
 $P -d t1 -f tests/sql/supabase_shim.sql
 $P -d t1 -f supabase/migrations/0001_schema.sql
 $P -d t1 -f supabase/migrations/0002_profiles.sql
+$P -d t1 -f supabase/migrations/0003_admin.sql

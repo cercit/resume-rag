@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Resume Tailor admin</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .admin{padding:40px 0 80px}
+    .admin h1{font-size:40px;margin-bottom:8px}
+    .admin .lead{color:var(--muted);font-size:16px;margin-bottom:28px}
+    .admin-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:28px;max-width:440px}
+    .admin-card label{display:block;font-size:14px;color:var(--muted);margin:0 0 8px}
+    .admin-card input{font-size:16px;margin-bottom:16px}
+    .admin-card .button{width:100%;justify-content:space-between}
+    .admin-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+    .admin-tools input{max-width:320px;font-size:15px;padding:10px 14px}
+    .admin-tools span{color:var(--muted);font-size:14px}
+    .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+    table{border-collapse:collapse;width:100%;font-size:15px;min-width:820px}
+    th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+    th{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.5px;text-transform:uppercase;background:var(--surface)}
+    tr:last-child td{border-bottom:0}
+    td small{display:block;color:var(--muted);font-size:13px}
+    .limit-cell{display:flex;gap:8px;align-items:center}
+    .limit-cell input{width:72px;padding:8px 10px;font-size:15px;margin:0}
+    .limit-cell .button{min-height:38px;padding:8px 14px}
+    .used-up{color:var(--accent);font-weight:600}
+    .admin-error{max-width:640px}
+  </style>
+</head>
+<body>
+  <header class="site-header shell">
+    <a class="brand" href="./" aria-label="Resume Tailor home"><span class="brand-mark" aria-hidden="true">r<span>t</span><i></i></span><span>resume<span class="brand-light">tailor</span><span class="brand-dot">.</span></span></a>
+    <div class="header-actions"><button class="button small outline" id="admin-sign-out" hidden>Sign out</button></div>
+  </header>
+  <main class="admin shell">
+    <h1>Admin</h1>
+    <p class="lead">Every user, how many resumes they made, and their daily limit. The default limit is 3 a day.</p>
+
+    <section id="sign-in" class="admin-card">
+      <form id="admin-email-form"><label for="admin-email">Admin email</label><input id="admin-email" type="email" required autocomplete="email" placeholder="you@example.com"><button class="button primary" type="submit">Send me a code</button></form>
+      <form id="admin-code-form" hidden><label for="admin-code">6-digit code</label><input id="admin-code" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000"><button class="button primary" type="submit">Sign in</button></form>
+    </section>
+
+    <section id="users" hidden>
+      <div class="admin-tools"><input id="filter" type="search" placeholder="Search email, name or username"><button class="button small outline" id="reload">Refresh</button><span id="summary"></span></div>
+      <div class="table-wrap"><table><thead><tr><th>User</th><th>Joined</th><th>Last sign-in</th><th>Today</th><th>7 days</th><th>Daily limit</th></tr></thead><tbody id="rows"></tbody></table></div>
+    </section>
+
+    <p id="admin-error" class="inline-error admin-error" role="alert" hidden></p>
+  </main>
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
