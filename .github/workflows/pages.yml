@@ -1,12 +1,11 @@
-# Publishes web/ to GitHub Pages on every push to main.
-# It does not switch Pages on: Sameer turns Pages on in Settings > Pages (Source: GitHub Actions)
-# only when he decides the site goes live. Until then this job fails at "Deploy" and nothing is published.
+# Publishes site/ (the live website since 29 Oct 2026) to GitHub Pages on every push to main.
+# The work/ folder (design notes, local logs) and START_SITE.cmd are left out of the published copy.
 name: Deploy web to GitHub Pages
 
 on:
   push:
     branches: [main]
-    paths: ["web/**", ".github/workflows/pages.yml"]
+    paths: ["site/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -27,8 +26,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - name: Copy the site without local-only files
+        run: |
+          mkdir -p _publish
+          cp -r site/. _publish/
+          rm -rf _publish/work _publish/START_SITE.cmd
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: web
+          path: _publish
       - id: deployment
         uses: actions/deploy-pages@v4

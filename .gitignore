@@ -17,3 +17,6 @@ knowledge/*
 /greenhouse-resume-parse/
 /huntr-job-search-trends-q2-2026/
 /resumegenius-hiring-insights-report/
+
+# Local design notes and preview server logs for the site
+site/work/

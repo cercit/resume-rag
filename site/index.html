@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="description" content="Make your resume fit the role. Resume Tailor rewrites with your experience, keeps your facts, and puts you in control.">
+  <title>Resume Tailor — Your experience. A better fit.</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/dm-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="config.js"></script>
+  <script defer src="render.js"></script>
+  <script defer src="api.js"></script>
+  <script defer src="demo-data.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <svg class="svg-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-up-right" viewBox="0 0 24 24"><path d="M6 18 18 6M6 6h12v12"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-document" viewBox="0 0 24 24"><path d="M14 3H5v18h14V8l-5-5Zm0 0v6h5M9 13h6m-6 4h6"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 16v5h16v-5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3Z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1 1m12 12 1 1M5 19l1-1M18 6l1-1"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15.2A9 9 0 0 1 8.8 4 9 9 0 1 0 20 15.2Z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7V5Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 4 4 9l5 5M4 9h10a6 6 0 0 1 0 12h-2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 17v4h16v-4"/></symbol>
+  </svg>
+
+  <header class="site-header shell">
+    <a class="brand" href="#" aria-label="Resume Tailor home"><span class="brand-mark" aria-hidden="true">r<span>t</span><i></i></span><span>resume<span class="brand-light">tailor</span><span class="brand-dot">.</span></span></a>
+    <nav aria-label="Main navigation">
+      <a href="#workspace" data-home-anchor="workspace">Workspace</a>
+      <a href="#how-it-works" data-home-anchor="how-it-works">How it works</a>
+      <button class="nav-link" data-action="privacy">Your privacy</button>
+    </nav>
+    <div class="header-actions"><span class="free-tag"><i></i> Free to use</span><button class="icon-button" id="theme-toggle" aria-label="Switch to light theme"><svg><use href="#i-sun"/></svg></button><button class="button small outline" id="account-button">Sign in <svg><use href="#i-up-right"/></svg></button></div>
+  </header>
+
+  <main id="main">
+    <div id="view-home" class="view">
+      <section class="hero shell" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="live-dot"></span> YOUR NEXT CHAPTER STARTS HERE</div>
+          <h1 id="hero-title">Your experience.<br>A <span class="accent">better fit<span class="period">.</span></span></h1>
+          <p class="hero-description">You have the experience. Let's find the right words.<br class="desktop-break"> A resume tailored to the role, with every fact still yours.</p>
+          <div class="hero-actions"><a class="button primary" href="#workspace">Tailor my resume <svg><use href="#i-arrow"/></svg></a><button class="text-button" data-action="demo"><span class="play-circle"><svg><use href="#i-play"/></svg></span> See it in action</button></div>
+          <div class="hero-fineprint"><span><svg><use href="#i-check"/></svg> Free. No subscription.</span><span><svg><use href="#i-check"/></svg> Built around your facts.</span></div>
+        </div>
+        <div class="hero-visual" aria-label="Illustration of a resume being matched to a role">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="visual-cross cross-one">+</div><div class="visual-cross cross-two">+</div>
+          <div class="paper-back"></div>
+          <div class="resume-paper" data-tilt>
+            <div class="paper-topline"><span>YOUR NEXT CHAPTER</span><svg><use href="#i-spark"/></svg></div>
+            <div class="paper-name">Your name<span>.</span></div><div class="paper-role">Your experience. Clearly told.</div>
+            <div class="paper-rule"></div><div class="paper-label">PROFILE</div><div class="skeleton w100"></div><div class="skeleton w90"></div><div class="skeleton w60"></div>
+            <div class="paper-label">EXPERIENCE</div><div class="paper-job"><b>Your work, in focus</b><span>2024 – Now</span></div><div class="paper-bullet"><i></i><div class="skeleton w100"></div></div><div class="paper-bullet"><i></i><div class="skeleton w90"></div></div><div class="paper-bullet"><i></i><div class="skeleton w75"></div></div>
+            <div class="paper-label">WHAT YOU BRING</div><div class="paper-skills"><span>Your skills</span><span>Your impact</span><span>Your story</span></div>
+            <div class="paper-footer"><span>MADE FOR THE OPPORTUNITY</span><span>01</span></div>
+            <div class="scan-line"></div>
+          </div>
+          <div class="floating-label fit-label"><span class="label-icon"><svg><use href="#i-spark"/></svg></span><div>Made for this role<small>Relevant experience, up front</small></div></div>
+          <div class="floating-label facts-label"><span class="label-icon green"><svg><use href="#i-shield"/></svg></span><div>Still 100% you<small>No invented skills or claims</small></div><span class="tiny-check">✓</span></div>
+          <div class="visual-caption"><span class="caption-line"></span> A LITTLE REWRITING. A CLEARER STORY.</div>
+        </div>
+      </section>
+
+      <div class="benefit-strip shell"><div><svg><use href="#i-clock"/></svg><span>About a minute<small>to a more relevant resume</small></span></div><div><svg><use href="#i-document"/></svg><span>A clean A4 PDF<small>designed for up to two pages</small></span></div><div><svg><use href="#i-undo"/></svg><span>Room to make it yours<small>10 tweaks, with free undo</small></span></div><div><svg><use href="#i-shield"/></svg><span>Your facts stay yours<small>experience kept honest</small></span></div></div>
+
+      <section id="workspace" class="workspace shell" aria-labelledby="workspace-title">
+        <div class="section-heading"><div><div class="eyebrow">THE WORKSPACE</div><h2 id="workspace-title">Let's find your fit<span class="accent">.</span></h2><p>A different role deserves a different resume. Let's make this one count.</p></div><button class="text-button sample-link" id="load-sample">Just exploring? <span>Use a sample <svg><use href="#i-up-right"/></svg></span></button></div>
+        <div class="role-reminder"><span class="reminder-icon"><svg><use href="#i-spark"/></svg></span><div><h3>One job. One tailored resume.</h3><p>Each role has different priorities. Start with your experience, then bring the work that fits this opportunity to the front.</p></div><span class="reminder-aside">A little intention.<br>A clearer first impression.</span></div>
+        <div class="sample-notice" id="sample-notice" hidden><svg><use href="#i-spark"/></svg><span>Sample workspace · fictional resume and role. Your demo stays in this browser.</span><button class="nav-link" id="clear-sample">Clear sample</button></div>
+        <div class="input-grid">
+          <article class="input-card">
+            <div class="card-heading"><div class="step-label"><span>01</span><h3>Your experience</h3></div><span class="mini-tag">THE STARTING POINT</span></div>
+            <div class="input-tabs" role="tablist" aria-label="Resume input method"><button class="input-tab active" id="tab-upload" role="tab" aria-controls="panel-upload" aria-selected="true">Upload resume</button><button class="input-tab" id="tab-paste" role="tab" aria-controls="panel-paste" aria-selected="false" tabindex="-1">Paste text</button></div>
+            <div id="panel-upload" role="tabpanel" aria-labelledby="tab-upload">
+              <button type="button" class="upload-zone" id="upload-zone"><span class="upload-icon"><svg><use href="#i-upload"/></svg></span><strong>Drop your resume here</strong><span>or <u>choose a file</u> from your device</span><small>PDF, DOCX or TXT · up to 10 MB</small></button>
+              <input id="resume-file" type="file" accept=".pdf,.docx,.txt" hidden>
+            </div>
+            <div id="panel-paste" role="tabpanel" aria-labelledby="tab-paste" hidden><label class="sr-only" for="resume-text">Your resume text</label><textarea id="resume-text" maxlength="20000" placeholder="Paste your resume here. Include your experience, skills, education and contact details."></textarea><div class="field-meta"><span>Review and fix the text before continuing.</span><span id="resume-count">0 / 20,000</span></div></div>
+            <div class="card-footnote"><svg><use href="#i-shield"/></svg><span>Your file is read on your device. Only text is sent.</span></div>
+          </article>
+          <article class="input-card">
+            <div class="card-heading"><div class="step-label"><span>02</span><h3>Your next opportunity</h3></div><span class="mini-tag">THE DESTINATION</span></div>
+            <label class="field-label" for="jd-text">Job description</label>
+            <textarea id="jd-text" maxlength="12000" placeholder="Paste the job description you're applying for...&#10;&#10;The role, responsibilities and requirements help us bring the right experience forward."></textarea>
+            <div class="field-meta"><span>A full description gives us more to work with.</span><span id="jd-count">0 / 12,000</span></div>
+            <div class="card-footnote"><svg><use href="#i-spark"/></svg><span>We match the wording. We keep your facts.</span></div>
+          </article>
+        </div>
+        <div id="input-error" class="inline-error" role="alert" hidden></div>
+        <div class="generate-row"><div class="generate-note"><svg><use href="#i-clock"/></svg><div>A little care takes about a minute.<small>You can follow along while we work.</small></div></div><button class="button primary large" id="generate-button">Tailor my resume <svg><use href="#i-arrow"/></svg></button></div>
+        <p class="privacy-note">Text is processed by an AI service. Sessions are removed after 7 days. <button class="inline-link" data-action="privacy">How your data is used <span>↗</span></button></p>
+      </section>
+
+      <section id="how-it-works" class="how-section shell" aria-labelledby="how-title"><div class="section-heading"><div><div class="eyebrow">LESS FRICTION. MORE YOU.</div><h2 id="how-title">A small step toward<br>your next big thing.</h2></div><p>You bring the experience.<br>We'll help it speak to the opportunity.</p></div><div class="how-grid"><article><span class="how-number">01 /</span><h3>Bring your story</h3><p>Upload your resume and add the job description. Check the extracted text before you continue.</p></article><article><span class="how-number">02 /</span><h3>Find the right words</h3><p>Your experience is rewritten for the role. Unsupported skills are flagged as gaps.</p></article><article><span class="how-number">03 /</span><h3>Make it feel like you</h3><p>Review the result, ask for changes in plain words, and save your PDF when you're ready.</p></article></div></section>
+      <section class="honesty shell"><span class="honesty-symbol" aria-hidden="true">*</span><div><div class="eyebrow">A PROMISE WORTH KEEPING</div><h2>A better resume.<br>The same honest story.</h2></div><p>Your titles, employers and achievements belong to you. We check the rewrite against your original resume and flag what the role asks for that your experience doesn't show.</p></section>
+    </div>
+
+    <section id="view-waiting" class="view waiting shell" hidden aria-labelledby="waiting-title">
+      <div class="waiting-topline"><button class="text-button" id="stop-waiting"><span>←</span> Back to workspace</button><span class="mini-tag" id="waiting-mode">SAMPLE DEMO · SIMULATED STAGES</span></div>
+      <div class="journey-nav" aria-label="Resume journey"><span class="done"><i>✓</i> Your experience</span><b></b><span class="current"><i>02</i> Finding your fit</span><b></b><span><i>03</i> Make it yours</span></div>
+      <div class="waiting-heading"><div class="eyebrow"><span class="live-dot"></span> A LITTLE CARE, BEHIND THE SCENES</div><h1 id="waiting-title">Good things take<br>a little <span class="accent">tailoring.</span></h1><p id="waiting-description">Your next chapter is taking shape. Here's what goes into it.</p><button class="button primary ready-shortcut" id="ready-shortcut" hidden>Open your resume <svg><use href="#i-arrow"/></svg></button></div>
+      <div class="waiting-grid">
+        <article class="progress-card">
+          <div class="progress-card-top"><div class="eyebrow" id="progress-eyebrow">YOUR RESUME, IN THE MAKING</div><span class="status-pill" id="progress-badge"><i></i> Working</span></div>
+          <div class="time-row"><div><span class="time-label">TIME ELAPSED</span><div class="elapsed" id="elapsed" role="timer" aria-live="off" aria-label="Time elapsed">00<span>:</span>00</div></div><div class="time-estimate"><svg><use href="#i-clock"/></svg><span id="time-estimate">30-second sample demo</span><small id="time-detail">Real generation is usually 54–90 seconds</small></div></div>
+          <div class="progress-track" id="progress-track" role="progressbar" aria-label="Sample demo progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="progress-fill"></div></div>
+          <p class="progress-caption" id="progress-caption">Step 1 of 5 · Reading your experience</p>
+          <ol class="stage-list" id="stage-list"></ol>
+          <div class="progress-reassurance"><svg><use href="#i-shield"/></svg><span id="wait-reassurance">A clearer story, built from your experience.</span></div>
+          <div id="waiting-error" class="inline-error" hidden role="alert"></div>
+          <div class="wait-complete-actions" id="wait-complete-actions" hidden><button class="button primary" id="review-result">Review your resume <svg><use href="#i-arrow"/></svg></button><button class="text-button" id="replay-demo"><svg><use href="#i-undo"/></svg> Replay</button></div>
+        </article>
+        <aside class="engagement-column">
+          <article class="tip-card" id="tip-card" aria-labelledby="tip-title"><div class="tip-top"><span class="eyebrow"><svg><use href="#i-spark"/></svg> WHILE WE TAILOR</span><span class="tip-counter" id="tip-counter">01 / 08</span></div><div class="tip-art" aria-hidden="true"><div class="mini-doc"><span></span><span></span><span></span><span></span></div><span class="mini-spark">✳</span><span class="mini-line"></span></div><div class="tip-content" id="tip-content"><span class="tip-kicker">A SMALL THING THAT HELPS</span><h2 id="tip-title">Lead with relevance.</h2><p id="tip-body">Put the experience that best fits this role near the top.</p></div><div class="tip-bottom"><div class="tip-dots" id="tip-dots" aria-hidden="true"></div><div class="tip-controls"><button class="icon-button" id="previous-tip" aria-label="Previous tip">←</button><button class="icon-button" id="pause-tips" aria-label="Pause tips" aria-pressed="false"><svg><use href="#i-pause"/></svg></button><button class="icon-button" id="next-tip" aria-label="Next tip">→</button></div></div></article>
+          <article class="quiz-card"><div class="quiz-heading"><span class="eyebrow">A QUICK RESUME INSTINCT CHECK</span><span>↗</span></div><h3 id="quiz-question">Which bullet tells a clearer story?</h3><div id="quiz-options" class="quiz-options"></div><p id="quiz-feedback" class="quiz-feedback" role="status" hidden></p><button class="text-button" id="next-quiz" hidden>Try another <svg><use href="#i-arrow"/></svg></button></article>
+        </aside>
+      </div>
+      <p class="waiting-bottom">Every application is a new opportunity. Give this one your own, honest story.</p>
+    </section>
+
+    <section id="view-result" class="view result shell" hidden aria-labelledby="result-title"><div class="result-heading"><div><div class="eyebrow"><span class="live-dot"></span> READY FOR YOUR NEXT CHAPTER</div><h1 id="result-title">A better fit. <span class="accent">Still you.</span></h1><p id="result-subtitle">Review every detail, make it your own, and take the next step.</p></div><button class="button primary" id="download-pdf"><svg><use href="#i-download"/></svg> Download PDF</button></div><div class="result-demo-notice" id="result-demo-notice" hidden>Sample result · Aarav Sharma is a fictional candidate. Try the supported edits below, or start with your own resume.</div><div class="result-grid"><article class="preview-panel"><div class="preview-toolbar"><span><svg><use href="#i-document"/></svg> Your tailored resume</span><div><span id="version-label">Version 1</span><span id="fit-status">A4 layout</span></div></div><div class="resume-preview-wrap" id="resume-preview-wrap"><iframe id="resume-preview" title="Your tailored resume preview"></iframe></div><div class="preview-bottom"><svg><use href="#i-shield"/></svg><span>Check your contact details and every claim before applying.</span></div></article><aside class="result-side"><article class="edit-card"><div class="card-title-row"><h2>The finishing touches</h2><svg><use href="#i-spark"/></svg></div><p>Tell us what you'd like to change.</p><div class="tweak-count"><span id="tweaks-left">10 of 10 tweaks left</span><span>Undo is free</span></div><label class="sr-only" for="tweak-text">Change request</label><textarea id="tweak-text" maxlength="300" placeholder="e.g. Shorten the summary..."></textarea><div class="suggested-edits"><button data-tweak="Shorten the summary">Shorter summary ↗</button><button data-tweak="Put projects first">Projects first ↗</button></div><div class="edit-actions"><button class="button primary" id="apply-tweak">Apply change <svg><use href="#i-arrow"/></svg></button><button class="icon-button" id="undo-tweak" disabled aria-label="Undo last change"><svg><use href="#i-undo"/></svg></button></div><p id="tweak-status" class="tweak-status" role="status" hidden></p><p class="small-muted">Failed or refused changes don't use a tweak.</p></article><article class="match-card"><div class="card-title-row"><h2>How it lines up</h2><span class="mini-tag">JOB KEYWORDS</span></div><h3>Already in your experience</h3><div id="keywords-found" class="chips found"></div><h3>Not in your resume</h3><div id="keywords-missing" class="chips missing"></div><div class="gap-note"><svg><use href="#i-shield"/></svg><div><strong>Honest gaps, clearly marked.</strong><ul id="gaps"></ul></div></div></article><div class="result-bottom-actions"><button class="text-button" id="start-over">← Tailor for another role</button><button class="text-button" id="result-replay" hidden>Replay demo <svg><use href="#i-undo"/></svg></button></div></aside></div><p class="privacy-note">Download opens your browser's print dialog. Choose “Save as PDF” and turn off headers and footers.</p></section>
+  </main>
+
+  <footer class="site-footer shell"><a class="brand footer-brand" href="#">resume<span class="brand-light">tailor</span><span class="brand-dot">.</span></a><span>Made for your next chapter.</span><div><button class="nav-link" data-action="privacy">Privacy</button><button class="nav-link" id="motion-toggle" aria-pressed="false">Motion on</button><a href="https://samsm.vercel.app/" target="_blank" rel="noopener">Built by Sameer <svg><use href="#i-up-right"/></svg></a></div></footer>
+  <div class="toast" id="toast" role="status" hidden></div><div class="sr-only" id="stage-announcement" role="status" aria-live="polite"></div>
+
+  <dialog id="auth-dialog" class="modal" aria-labelledby="auth-title"><button class="icon-button modal-close" data-close="auth-dialog" aria-label="Close sign in"><svg><use href="#i-close"/></svg></button><span class="modal-symbol"><svg><use href="#i-spark"/></svg></span><div class="eyebrow">ONE STEP CLOSER</div><h2 id="auth-title">Your next chapter,<br>in your inbox.</h2><p id="auth-description">Sign in with a 6-digit email code. No password to remember.</p><form id="email-form"><label for="auth-email">Your email address</label><input id="auth-email" type="email" required autocomplete="email" placeholder="you@example.com"><button class="button primary" type="submit">Send me a code <svg><use href="#i-arrow"/></svg></button></form><form id="code-form" hidden><label for="auth-code">6-digit code</label><input id="auth-code" required autocomplete="one-time-code" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="000000"><div class="code-meta"><span id="code-expiry">Valid for 10:00</span><button type="button" class="inline-link" id="resend-code">Resend code</button></div><button class="button primary" type="submit">Let's get started <svg><use href="#i-arrow"/></svg></button><button type="button" class="text-button" id="change-email">Use a different email</button></form><p id="auth-error" class="inline-error" role="alert" hidden></p><p class="small-muted">Free to use · Up to 3 resumes a day · 10 tweaks per resume</p></dialog>
+  <dialog id="privacy-dialog" class="modal privacy-modal" aria-labelledby="privacy-title"><button class="icon-button modal-close" data-close="privacy-dialog" aria-label="Close privacy details"><svg><use href="#i-close"/></svg></button><div class="eyebrow">YOUR DATA, IN PLAIN WORDS</div><h2 id="privacy-title">Your story stays yours.</h2><div class="privacy-item"><svg><use href="#i-document"/></svg><div><h3>Your file stays on your device</h3><p>PDF and DOCX files are converted to text in your browser. You can review that text before generating.</p></div></div><div class="privacy-item"><svg><use href="#i-spark"/></svg><div><h3>Text is sent to an AI service</h3><p>Your resume text and job description are sent through our server to OpenRouter to prepare the rewrite. Free model providers may log prompts. Remove information you don't want processed before you continue.</p></div></div><div class="privacy-item"><svg><use href="#i-clock"/></svg><div><h3>Sessions expire after 7 days</h3><p>Resume Tailor's backend removes session data after 7 days. The sample demo runs in your browser without sending resume text.</p></div></div><div class="privacy-item"><svg><use href="#i-shield"/></svg><div><h3>You have the final say</h3><p>The rewrite is checked against your original experience. Review the result before using it in an application.</p></div></div><button class="button primary" data-close="privacy-dialog">Got it <svg><use href="#i-check"/></svg></button></dialog>
+  <noscript><div class="noscript">Please enable JavaScript to use the resume workspace.</div></noscript>
+</body>
+</html>
