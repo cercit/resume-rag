@@ -380,11 +380,11 @@
     }
     $('account-button').title = session ? `Signed in as ${session.user?.email || 'you'}` : 'Sign in with an email code';
   }
-  // Every new resume needs a fresh email code; nothing is remembered between visits (29 Oct 2026).
+  // Signed in during this visit: no new code. Sign-in is not saved, so a reload or a new visit asks for one.
   async function requestGeneration() {
     if (state.busy || !validation()) return;
     counts();
-    if (state.session) { try { await API.signOut(); } catch (error) { /* the code below signs in again */ } updateAccount(null); }
+    if (state.session) { beginWaiting(false); return; }
     if (state.email) $('auth-email').value = state.email;
     state.pendingGenerate = true; await openAuth();
   }
