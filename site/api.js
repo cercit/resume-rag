@@ -80,8 +80,14 @@
     if (clientPromise) return clientPromise;
     clientPromise = loadScript(SUPABASE, "supabase").then(function (library) {
       const cfg = config();
+      // Sign-in lives in this tab's memory only (29 Oct 2026): a reload or a new visit needs a new email code.
+      // Sessions saved by the earlier version of the site are removed.
+      try {
+        Object.keys(localStorage).filter(function (k) { return /^sb-.*-auth-token$/.test(k); })
+          .forEach(function (k) { localStorage.removeItem(k); });
+      } catch (error) { /* storage blocked: nothing saved to remove */ }
       const client = library.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+        auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false }
       });
       client.auth.onAuthStateChange(function (event, session) {
         // Keep application work outside the auth library's state-change callback.
@@ -205,8 +211,44 @@
     return result.data;
   }
 
+  async function currentUserId() {
+    const client = await existingClient();
+    const result = await client.auth.getSession();
+    const id = result.data && result.data.session && result.data.session.user && result.data.session.user.id;
+    if (!id) throw failure("not_signed_in", "Please sign in again.");
+    return { client: client, id: id };
+  }
+
+  async function getProfile() {
+    const me = await currentUserId();
+    const result = await me.client.from("profiles").select("full_name, username").eq("user_id", me.id).maybeSingle();
+    if (result.error) throw failure("profile_failed", "Could not load your profile.", result.status);
+    return result.data || { full_name: null, username: null };
+  }
+
+  async function saveProfile(name, username) {
+    name = String(name || "").trim().slice(0, 80) || null;
+    username = String(username || "").trim().toLowerCase() || null;
+    if (username && !/^[a-z0-9_]{3,20}$/.test(username)) throw failure("bad_username", "Use 3 to 20 lowercase letters, numbers or _ for the username.");
+    const me = await currentUserId();
+    const result = await me.client.from("profiles").upsert({ user_id: me.id, full_name: name, username: username, updated_at: new Date().toISOString() });
+    if (result.error) {
+      if (result.error.code === "23505") throw failure("username_taken", "That username is taken. Try another.");
+      throw failure("profile_failed", "Could not save your profile. Please try again.", result.status);
+    }
+    return { full_name: name, username: username };
+  }
+
+  async function myResumes() {
+    const client = await existingClient();
+    const result = await client.rpc("my_resumes");
+    if (result.error) throw failure("resumes_failed", "Could not load your resumes.", result.status);
+    return result.data || [];
+  }
+
   function tidy(text) {
-    return String(text || "").replace(/\r/g, "").replace(/[ \t]+\n/g, "\n").replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+    const ligatures = { "ﬀ": "ff", "ﬁ": "fi", "ﬂ": "fl", "ﬃ": "ffi", "ﬄ": "ffl", "ﬅ": "st", "ﬆ": "st" };
+    return String(text || "").replace(/[ﬀ-ﬆ]/g, function (l) { return ligatures[l]; }).replace(/\r/g, "").replace(/[ \t]+\n/g, "\n").replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
   }
 
   async function pdfText(buffer) {
@@ -220,9 +262,21 @@
       for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber++) {
         const page = await doc.getPage(pageNumber);
         const content = await page.getTextContent();
-        pages.push(content.items.map(function (item) {
-          return typeof item.str === "string" ? item.str + (item.hasEOL ? "\n" : " ") : "";
-        }).join(""));
+        // Pieces that touch on the same line are one word. Joining every piece with a space split
+        // "finstack" into "/ fi nstack" in the first real resume (29 Oct 2026).
+        let text = "", prev = null;
+        content.items.forEach(function (item) {
+          if (typeof item.str !== "string") return;
+          if (prev && !prev.hasEOL) {
+            const size = Math.hypot(item.transform[0], item.transform[1]) || 10;
+            const sameLine = Math.abs(item.transform[5] - prev.transform[5]) < size * 0.3;
+            const gap = item.transform[4] - (prev.transform[4] + prev.width);
+            text += sameLine && gap < size * 0.1 ? "" : " ";
+          }
+          text += item.str + (item.hasEOL ? "\n" : "");
+          prev = item;
+        });
+        pages.push(text);
         page.cleanup();
       }
       return pages.join("\n");
@@ -269,6 +323,9 @@
     generate: generate,
     tweak: tweak,
     undo: undo,
+    getProfile: getProfile,
+    saveProfile: saveProfile,
+    myResumes: myResumes,
     extract: extract
   };
 })(window);

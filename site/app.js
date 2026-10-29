@@ -18,7 +18,7 @@
     waitTimer: null, startedAt: 0, stage: -1, tip: Math.floor(Math.random() * DEMO.tips.length), tipPaused: reducedMotion.matches,
     tipLastAt: 0, quiz: 0, completed: false, failed: false, resume: null, notes: null, sessionId: null,
     history: [], tweaksLeft: 10, versions: 1, pendingGenerate: false, email: '', codeSentAt: 0, otpTimer: null,
-    toastTimer: null, motionOff: reducedMotion.matches, authEpoch: 0 };
+    toastTimer: null, motionOff: reducedMotion.matches, authEpoch: 0, profileName: '' };
 
   function pref(key, value) {
     try { if (value !== undefined) localStorage.setItem(key, value); else return localStorage.getItem(key); } catch (_) { /* Preferences are optional. */ }
@@ -370,14 +370,80 @@
 
   function updateAccount(session) {
     state.session = session;
-    $('account-button').innerHTML = (session ? 'Sign out ' : 'Sign in ') + icon('up-right');
+    if (session?.user?.email) state.email = session.user.email;
+    $('account-button').innerHTML = session ? 'Profile' : 'Sign in ' + icon('up-right');
+    if (session) {
+      const avatar = document.createElement('span'); avatar.className = 'account-avatar';
+      avatar.textContent = (state.profileName || session.user?.email || '?').trim().charAt(0).toUpperCase();
+      $('account-button').prepend(avatar);
+    }
     $('account-button').title = session ? `Signed in as ${session.user?.email || 'you'}` : 'Sign in with an email code';
   }
+  // Every new resume needs a fresh email code; nothing is remembered between visits (29 Oct 2026).
   async function requestGeneration() {
     if (state.busy || !validation()) return;
     counts();
-    if (state.session) { beginWaiting(false); return; }
+    if (state.session) { try { await API.signOut(); } catch (error) { /* the code below signs in again */ } updateAccount(null); }
+    if (state.email) $('auth-email').value = state.email;
     state.pendingGenerate = true; await openAuth();
+  }
+
+  // Profile: resumes left today, recent resumes (kept 7 days), optional name and username.
+  const DAILY = 3;
+  function resumeLabel(resume) {
+    const nameWords = new Set(String(resume?.contact?.name || '').toLowerCase().split(/\s+/));
+    const words = String(resume?.file_name || '').replace(/^Resume_/, '').split('_').filter(w => w && !nameWords.has(w.toLowerCase()));
+    return words.join(' ') || 'Tailored resume';
+  }
+  function keywordNotes(resume) {
+    const skip = new Set(['jd_keywords', 'file_name', 'order']), flat = [];
+    const walk = (v, k) => { if (skip.has(k)) return; if (typeof v === 'string') flat.push(v); else if (v && typeof v === 'object') Object.entries(v).forEach(([kk, x]) => walk(x, kk)); };
+    walk(resume, '');
+    const text = flat.join(' ').replace(/\s+/g, ' ').toLowerCase(), keys = resume?.jd_keywords || [];
+    return { keywords_found: keys.filter(k => text.includes(k.toLowerCase())), keywords_missing: keys.filter(k => !text.includes(k.toLowerCase())), gaps: [] };
+  }
+  async function openProfile() {
+    message('profile-error', '');
+    $('profile-email').textContent = state.email ? `Signed in as ${state.email}. Closing or reloading this tab signs you out.` : '';
+    $('profile-title').textContent = state.profileName ? `Hello, ${state.profileName}.` : 'Hello.';
+    $('profile-left').textContent = '–'; $('profile-count').textContent = '–';
+    $('profile-resumes').replaceChildren();
+    $('profile-dialog').showModal();
+    try {
+      const [profile, rows] = await Promise.all([API.getProfile(), API.myResumes()]);
+      state.profileName = profile.full_name || '';
+      $('profile-name').value = profile.full_name || ''; $('profile-username').value = profile.username || '';
+      $('profile-title').textContent = state.profileName ? `Hello, ${state.profileName}.` : 'Hello.';
+      const today = rows.filter(r => Date.now() - new Date(r.created_at).getTime() < 24 * 3600 * 1000).length;
+      $('profile-left').textContent = `${Math.max(0, DAILY - today)} of ${DAILY}`;
+      $('profile-count').textContent = String(rows.length);
+      if (!rows.length) { const li = document.createElement('li'); li.className = 'empty'; li.textContent = 'No resumes yet. Your tailored resumes show here for 7 days.'; $('profile-resumes').append(li); }
+      rows.forEach(row => {
+        const li = document.createElement('li'), info = document.createElement('div'), b = document.createElement('b'), small = document.createElement('small'), open = document.createElement('button');
+        b.textContent = resumeLabel(row.resume);
+        const when = new Date(row.created_at).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+        small.textContent = `${when} · ${row.max_tweaks - row.tweaks_used} of ${row.max_tweaks} tweaks left`;
+        open.className = 'button small outline'; open.type = 'button'; open.textContent = 'Open';
+        open.addEventListener('click', () => openSaved(row));
+        info.append(b, small); li.append(info, open); $('profile-resumes').append(li);
+      });
+      updateAccount(state.session);
+    } catch (error) { message('profile-error', friendlyError(error)); }
+  }
+  function openSaved(row) {
+    if (state.busy) { toast('Finish the current action first.'); return; }
+    Object.assign(state, { demo: false, resume: row.resume, sessionId: row.session_id, tweaksLeft: row.max_tweaks - row.tweaks_used,
+      versions: row.current_version, history: [], notes: keywordNotes(row.resume) });
+    $('profile-dialog').close(); reviewResult();
+  }
+  async function signOutNow() {
+    if (state.busy) { toast('Finish the current action before signing out.'); return; }
+    try {
+      await API.signOut(); state.profileName = ''; updateAccount(null);
+      state.resume = null; state.notes = null; state.history = []; state.sessionId = null;
+      if ($('profile-dialog').open) $('profile-dialog').close();
+      goHome(); toast('Signed out.');
+    } catch (error) { toast(friendlyError(error)); }
   }
   async function openAuth() {
     message('auth-error', '');
@@ -469,14 +535,22 @@
   window.addEventListener('resize', scaleResume);
   document.addEventListener('visibilitychange', () => { state.tipLastAt = performance.now(); if (!document.hidden && state.view === 'waiting') tickWaiting(); });
   API.onAuthChange(session => updateAccount(session));
-  $('account-button').addEventListener('click', async () => {
-    if (state.busy) { toast('Finish the current action before changing accounts.'); return; }
+  $('account-button').addEventListener('click', () => {
     if (!state.session) { state.pendingGenerate = false; openAuth(); return; }
+    openProfile();
+  });
+  $('sign-out').addEventListener('click', signOutNow);
+  $('profile-form').addEventListener('submit', async event => {
+    event.preventDefault(); message('profile-error', '');
+    const button = $('profile-form').querySelector('button[type="submit"]'); button.disabled = true;
     try {
-      await API.signOut(); updateAccount(null);
-      if (!state.demo) { state.resume = null; state.notes = null; state.history = []; state.sessionId = null; goHome(); }
-      toast('Signed out.');
-    } catch (error) { toast(friendlyError(error)); }
+      const saved = await API.saveProfile($('profile-name').value, $('profile-username').value);
+      state.profileName = saved.full_name || '';
+      $('profile-username').value = saved.username || '';
+      $('profile-title').textContent = state.profileName ? `Hello, ${state.profileName}.` : 'Hello.';
+      updateAccount(state.session); toast('Profile saved.');
+    } catch (error) { message('profile-error', friendlyError(error)); }
+    finally { button.disabled = false; }
   });
   $('email-form').addEventListener('submit', event => { event.preventDefault(); sendCode(); });
   $('resend-code').addEventListener('click', sendCode);

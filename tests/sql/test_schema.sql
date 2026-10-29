@@ -170,4 +170,35 @@ do $$ declare r record; begin
 end $$;
 reset role;
 
+-- 14. profiles (0002): own row only, username rules, my_resumes returns only own sessions
+select pg_temp.act_as('authenticated', '00000000-0000-0000-0000-00000000000a');
+insert into public.profiles (full_name, username) values ('Asha Verma', 'asha_v');
+do $$ declare n int; begin
+  begin
+    insert into public.profiles (user_id, username) values ('00000000-0000-0000-0000-00000000000b', 'not_mine');
+    raise exception 'FAIL: inserted a profile for another user';
+  exception when insufficient_privilege then null; end;
+  begin
+    update public.profiles set username = 'Bad Name!';
+    raise exception 'FAIL: bad username accepted';
+  exception when check_violation then null; end;
+  select count(*) into n from public.my_resumes();
+  if n < 1 then raise exception 'FAIL: my_resumes returned nothing for user A'; end if;
+  raise notice 'PASS profiles and my_resumes for the owner';
+end $$;
+select pg_temp.act_as('authenticated', '00000000-0000-0000-0000-00000000000b');
+do $$ declare n int; begin
+  select count(*) into n from public.profiles;
+  if n <> 0 then raise exception 'FAIL: user B sees % profiles', n; end if;
+  select count(*) into n from public.my_resumes() where session_id in
+    (select id from public.resume_sessions where user_id = '00000000-0000-0000-0000-00000000000a');
+  if n <> 0 then raise exception 'FAIL: user B sees user A resumes'; end if;
+  begin
+    insert into public.profiles (username) values ('asha_v');
+    raise exception 'FAIL: duplicate username accepted';
+  exception when unique_violation then null; end;
+  raise notice 'PASS user B cannot see A''s profile or resumes; usernames unique';
+end $$;
+reset role;
+
 \echo ALL_SCHEMA_TESTS_PASSED

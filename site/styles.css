@@ -30,3 +30,22 @@ body{font-size:16px}.eyebrow{font-size:11px}.site-header nav{font-size:14px}.fre
 @media(max-width:620px){.hero-description{font-size:16px}.hero-copy .eyebrow{font-size:9px;letter-spacing:1px}.hero-fineprint{font-size:10px;gap:13px}.hero-actions .button{font-size:13px;gap:16px}.hero-actions{gap:17px}.hero-actions .text-button{font-size:12px;gap:6px}.benefit-strip span{font-size:12px}.benefit-strip small{font-size:10px}.section-heading h2{font-size:34px}.section-heading p{font-size:14px}.sample-link,.sample-link span{font-size:12px}.step-label h3{font-size:18px}.role-reminder{padding:18px 16px;gap:13px}.role-reminder h3{font-size:16px}.role-reminder p{font-size:13px}.card-heading .mini-tag{display:none}.field-meta{font-size:11px}.field-meta span:first-child{max-width:60%}.card-footnote{font-size:12px}.generate-note{font-size:14px}.generate-note small{font-size:12px}.privacy-note{font-size:11px}.how-grid h3{font-size:19px}.how-grid p,.honesty p{font-size:15px}.how-number{font-size:12px}.honesty .eyebrow{font-size:8px}.site-footer>div{font-size:11px;gap:10px}.waiting-topline .text-button{font-size:11px}.waiting-topline .mini-tag{font-size:8px}.journey-nav{font-size:9px;gap:6px}.journey-nav i{height:22px;width:22px;font-size:8px}.journey-nav b{width:12px}.waiting-heading h1{font-size:41px}.waiting-heading .eyebrow{font-size:8px}.waiting-heading p{font-size:14px}.progress-card-top .eyebrow{font-size:9px;max-width:190px}.time-estimate{max-width:160px;font-size:12px;padding-top:8px}.time-estimate small{font-size:10px}.elapsed{font-size:45px}.stage-content strong{font-size:14px}.stage-content small{font-size:12px}.stage-list li{gap:12px}.stage-duration{font-size:10px}.progress-reassurance{font-size:12px}.tip-content{min-height:170px}.tip-content h2{font-size:27px}.tip-content p{font-size:15px}.tip-top .eyebrow,.quiz-heading .eyebrow{font-size:9px}.quiz-card h3{font-size:16px}.quiz-options button{font-size:14px}.waiting-bottom{font-size:12px}.result-heading h1{font-size:34px}.result-heading p{font-size:14px}.card-title-row h2{font-size:20px}.edit-card>p{font-size:14px}.preview-toolbar{font-size:11px}.result-demo-notice{font-size:12px}.modal>.small-muted{font-size:11px}.header-actions .small{font-size:11px}.wait-complete-actions .button{font-size:12px}}
 
 .hero-visual{overflow:clip}.ready-shortcut{margin-top:5px;min-height:44px;font-size:13px;padding:13px 19px}.waiting-heading .ready-shortcut[hidden]{display:none}
+
+/* Profile panel (29 Oct 2026) */
+.profile-modal{width:min(520px,calc(100% - 32px))}
+.profile-modal h2{margin-bottom:6px}
+.profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 24px}
+.profile-stats div{border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.profile-stats strong{font-size:26px;color:var(--accent);line-height:1.1}
+.profile-stats span{font-size:12px;color:var(--muted)}
+.profile-heading{font-size:14px;margin:0 0 10px}
+.profile-resumes{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.profile-resumes li{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.profile-resumes li div{display:flex;flex-direction:column;min-width:0}
+.profile-resumes b{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-resumes small,.profile-resumes .empty{font-size:12px;color:var(--muted)}
+.profile-modal .small-note{font-size:12px;color:var(--muted);margin:8px 0 24px}
+.profile-modal form{border-top:1px solid var(--line);padding-top:20px}
+.profile-modal form>.button{width:auto}
+.profile-modal #sign-out{display:block;margin:18px auto 0;font-size:13px}
+.account-avatar{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:100%;background:var(--accent);color:#0a0a0f;font-size:11px;font-weight:700}
