@@ -31,6 +31,10 @@ jobs:
           mkdir -p _publish
           cp -r site/. _publish/
           rm -rf _publish/work _publish/START_SITE.cmd _publish/README.md _publish/previews
+          # Pages caches files for 10 min; a per-deploy version on each file makes browsers load the new ones.
+          v="${GITHUB_SHA::7}"
+          sed -i -E "s/(href|src)=\"(styles\.css|config\.js|render\.js|api\.js|demo-data\.js|app\.js)\"/\1=\"\2?v=$v\"/g" _publish/index.html
+          grep -c "?v=$v" _publish/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _publish

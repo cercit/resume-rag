@@ -371,7 +371,8 @@
   function updateAccount(session) {
     state.session = session;
     if (session?.user?.email) state.email = session.user.email;
-    $('account-button').innerHTML = session ? 'Profile' : 'Sign in ' + icon('up-right');
+    $('account-button').innerHTML = session ? ' ' + (state.profileName || 'Profile') : icon('user') + ' Sign in';
+    $('header-sign-out').hidden = !session;
     if (session) {
       const avatar = document.createElement('span'); avatar.className = 'account-avatar';
       avatar.textContent = (state.profileName || session.user?.email || '?').trim().charAt(0).toUpperCase();
@@ -540,6 +541,7 @@
     openProfile();
   });
   $('sign-out').addEventListener('click', signOutNow);
+  $('header-sign-out').addEventListener('click', signOutNow);
   $('profile-form').addEventListener('submit', async event => {
     event.preventDefault(); message('profile-error', '');
     const button = $('profile-form').querySelector('button[type="submit"]'); button.disabled = true;
