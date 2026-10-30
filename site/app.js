@@ -221,7 +221,7 @@
     $('wait-complete-actions').hidden = true;
     $('ready-shortcut').hidden = true;
     $('pause-tips').disabled = false;
-    message('waiting-error', '');
+    message('waiting-error', ''); $('limit-actions').hidden = true;
     setTipsPaused(state.motionOff || reducedMotion.matches);
     showTip(state.tip + 1); showQuiz(state.quiz);
     showView('waiting'); history.replaceState(null, '', '#waiting');
@@ -253,7 +253,10 @@
     announce('Your resume is ready. Use Review your resume to continue.');
   }
   function friendlyError(error) {
-    const errors = { tweak_limit_reached: 'All 10 tweaks have been used. You can still undo or download.', busy: 'The previous request is still being processed. Please wait before trying again.', not_signed_in: 'Your sign-in has expired. Please sign in again.', nothing_to_undo: 'There is no earlier version to restore.', llm_busy: 'The AI service is busy right now. Wait a minute and try again. Your inputs are still here, and no tweak was used.' };
+    const errors = { tweak_limit_reached: 'All 10 tweaks have been used. You can still undo or download.', busy: 'The previous request is still being processed. Please wait before trying again.', not_signed_in: 'Your sign-in has expired. Please sign in again.', nothing_to_undo: 'There is no earlier version to restore.', llm_busy: 'The AI service is busy right now. Wait a minute and try again. Your inputs are still here, and no tweak was used.',
+      daily_session_limit: 'You have used all your resumes for today. Ask for more, or try again tomorrow.', request_pending: 'You already have a request waiting for approval.',
+      request_limit: 'You have sent 3 requests today. Please wait for an answer.', feedback_limit: 'You have sent 5 messages today, thank you. Try again tomorrow.',
+      feedback_length: 'Please write 5 to 2000 characters.' };
     return errors[error.code] || (error.status >= 500 ? 'The resume service could not finish this time. Your inputs are still here.' : error.message) || 'Something did not finish. Please try again.';
   }
   function failWaiting(error) {
@@ -267,6 +270,7 @@
     $('waiting-description').textContent = 'We couldn\'t finish this time. Your inputs are still here.';
     $('time-estimate').textContent = 'Request ended'; $('time-detail').textContent = 'Return to the workspace to retry';
     message('waiting-error', friendlyError(error));
+    $('limit-actions').hidden = error.code !== 'daily_session_limit';
     setTipsPaused(true); announce('The request did not finish. Your inputs are still here.');
     $('pause-tips').disabled = true;
   }
@@ -291,6 +295,11 @@
     wrap.style.height = height * scale + padding + 'px'; wrap.style.minHeight = '0';
   }
   async function drawResult() {
+    if (state.ratedVersion !== state.versions) {
+      state.ratedVersion = null;
+      $$('[data-rate]').forEach(b => b.setAttribute('aria-pressed', 'false'));
+      message('rate-status', '');
+    }
     $('tweaks-left').textContent = `${state.tweaksLeft} of 10 tweaks left`;
     $('version-label').textContent = `Version ${state.versions}`;
     $('apply-tweak').disabled = state.tweaksLeft <= 0 || state.busy;
@@ -410,12 +419,11 @@
     $('profile-resumes').replaceChildren();
     $('profile-dialog').showModal();
     try {
-      const [profile, rows, daily] = await Promise.all([API.getProfile(), API.myResumes(), API.myLimit()]);
+      const [profile, rows, allowance] = await Promise.all([API.getProfile(), API.myResumes(), API.myAllowance().catch(() => null)]);
       state.profileName = profile.full_name || '';
       $('profile-name').value = profile.full_name || ''; $('profile-username').value = profile.username || '';
       $('profile-title').textContent = state.profileName ? `Hello, ${state.profileName}.` : 'Hello.';
-      const today = rows.filter(r => Date.now() - new Date(r.created_at).getTime() < 24 * 3600 * 1000).length;
-      $('profile-left').textContent = `${Math.max(0, daily - today)} of ${daily}`;
+      showAllowance(allowance, rows);
       $('profile-count').textContent = String(rows.length);
       if (!rows.length) { const li = document.createElement('li'); li.className = 'empty'; li.textContent = 'No resumes yet. Your tailored resumes show here for 7 days.'; $('profile-resumes').append(li); }
       rows.forEach(row => {
@@ -430,6 +438,100 @@
       updateAccount(state.session);
     } catch (error) { message('profile-error', friendlyError(error)); }
   }
+  function showAllowance(a, rows) {
+    const label = $('profile-left').nextElementSibling;
+    if (!a) {
+      const today = rows.filter(r => Date.now() - new Date(r.created_at).getTime() < 24 * 3600 * 1000).length;
+      $('profile-left').textContent = `${Math.max(0, 3 - today)} of 3`; label.textContent = 'resumes left today';
+      $('request-box').hidden = true; return;
+    }
+    $('profile-left').textContent = String(a.left);
+    label.textContent = a.extra ? `resumes left (${a.extra} extra)` : `resumes left today (of ${a.daily_limit})`;
+    const decided = a.last_decision, recent = decided && Date.now() - new Date(decided.decided_at).getTime() < 7 * 24 * 3600 * 1000;
+    let status = '';
+    if (a.pending) status = `Your request for ${a.pending.requested} more is waiting for approval.`;
+    else if (recent && decided.status === 'approved') status = `Approved: ${decided.granted} more resume${decided.granted === 1 ? '' : 's'} added.`;
+    else if (recent && decided.status === 'declined') status = 'Your last request was not approved.';
+    else if (a.left <= 0) status = 'You have used all your resumes for today.';
+    $('request-status').textContent = status;
+    $('request-status').hidden = !status;
+    $('profile-request').hidden = !!a.pending;
+    $('request-box').hidden = !status && a.left > 0;
+  }
+
+  // Request more resumes: the admin approves the number asked for, or changes it.
+  async function openRequest() {
+    if (!state.session) { toast('Sign in first to request more resumes.'); state.pendingGenerate = false; openAuth(); return; }
+    try {
+      const a = await API.myAllowance();
+      if (a.pending) { toast(`Your request for ${a.pending.requested} more is already waiting for approval.`); return; }
+    } catch (error) { /* the form still works; the database checks again */ }
+    message('request-error', '');
+    $('request-dialog').showModal(); $('request-count').focus();
+  }
+  async function sendRequest(event) {
+    event.preventDefault(); message('request-error', '');
+    const button = $('request-form').querySelector('button[type="submit"]'); button.disabled = true;
+    try {
+      await API.requestMore($('request-count').value, $('request-reason').value);
+      $('request-dialog').close(); $('request-reason').value = '';
+      $('limit-actions').hidden = true;
+      toast('Request sent. Your profile shows when it is approved.');
+      if ($('profile-dialog').open) showAllowance(await API.myAllowance(), []);
+    } catch (error) { message('request-error', friendlyError(error)); }
+    finally { button.disabled = false; }
+  }
+
+  // Feedback: bugs, improvements and ideas. From a result it can link the session (role and keywords only).
+  const FEEDBACK_PROMPTS = { bug: 'What went wrong? What did you expect to happen?', improvement: 'What could be better?', idea: 'What else would make this useful for you?' };
+  function feedbackKindChanged() {
+    const kind = document.querySelector('input[name="feedback-kind"]:checked')?.value || 'improvement';
+    $('feedback-message-label').textContent = FEEDBACK_PROMPTS[kind];
+  }
+  function openFeedback(kind) {
+    if (!state.session) { toast('Sign in first to send feedback.'); state.pendingGenerate = false; openAuth(); return; }
+    const fromResult = state.view === 'result' && state.sessionId && !state.demo;
+    $('feedback-link-row').hidden = !fromResult; $('feedback-link').checked = !!fromResult;
+    if (kind) document.querySelector(`input[name="feedback-kind"][value="${kind}"]`).checked = true;
+    feedbackKindChanged(); message('feedback-error', '');
+    if ($('profile-dialog').open) $('profile-dialog').close();
+    $('feedback-dialog').showModal(); $('feedback-message').focus();
+  }
+  async function sendFeedbackForm(event) {
+    event.preventDefault(); message('feedback-error', '');
+    const button = $('feedback-form').querySelector('button[type="submit"]'); button.disabled = true;
+    const fromResult = state.view === 'result' && state.sessionId && !state.demo;
+    try {
+      await API.sendFeedback({
+        kind: document.querySelector('input[name="feedback-kind"]:checked')?.value || 'improvement',
+        message: $('feedback-message').value,
+        rating: Number(document.querySelector('input[name="feedback-rating"]:checked')?.value) || null,
+        context: fromResult ? (state.versions > 1 ? 'after_tweak' : 'after_generate') : 'general',
+        sessionId: fromResult && $('feedback-link').checked ? state.sessionId : null,
+      });
+      $('feedback-dialog').close(); $('feedback-form').reset(); feedbackKindChanged();
+      toast('Thank you. Every message is read.');
+    } catch (error) { message('feedback-error', friendlyError(error)); }
+    finally { button.disabled = false; }
+  }
+  function rateResult(up) {
+    if (!state.resume) return;
+    state.ratedVersion = state.versions;
+    $$('[data-rate]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.rate === 'up') === up)));
+    if (!state.demo) API.recordSignal('rating', state.sessionId, { up, context: state.versions > 1 ? 'after_tweak' : 'after_generate' });
+    message('rate-status', up ? 'Thanks, glad it helped.' : 'Thanks. Tell us what to fix so the next one is better.');
+    if (!up && !state.demo) openFeedback('improvement');
+  }
+
+  // All-time counter on the home page; stays hidden if the numbers are not available yet.
+  async function showUsageStats() {
+    const stats = await API.publicStats();
+    if (!stats || !stats.resumes) return;
+    const n = v => Number(v).toLocaleString('en-IN');
+    $('usage-stats').innerHTML = `<b>${n(stats.users)}</b> ${stats.users === 1 ? 'person has' : 'people have'} tailored <b>${n(stats.resumes)}</b> resume${stats.resumes === 1 ? '' : 's'} here`;
+    $('usage-stats').hidden = false;
+  }
+
   function openSaved(row) {
     if (state.busy) { toast('Finish the current action first.'); return; }
     Object.assign(state, { demo: false, resume: row.resume, sessionId: row.session_id, tweaksLeft: row.max_tweaks - row.tweaks_used,
@@ -530,7 +632,17 @@
   $('undo-tweak').addEventListener('click', undoTweak);
   $$('[data-tweak]').forEach(button => button.addEventListener('click', () => { $('tweak-text').value = button.dataset.tweak; $('tweak-text').focus(); }));
   $('tweak-text').addEventListener('keydown', event => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); applyTweak(); } });
-  $('download-pdf').addEventListener('click', () => { if (state.resume && !state.busy) window.ResumeRender.print($('resume-preview')); });
+  $('download-pdf').addEventListener('click', () => {
+    if (!state.resume || state.busy) return;
+    if (!state.demo) API.recordSignal('download', state.sessionId, { version: state.versions });
+    window.ResumeRender.print($('resume-preview'));
+  });
+  $$('[data-action="feedback"]').forEach(button => button.addEventListener('click', () => openFeedback()));
+  $$('[data-action="request-more"]').forEach(button => button.addEventListener('click', openRequest));
+  $$('[data-rate]').forEach(button => button.addEventListener('click', () => rateResult(button.dataset.rate === 'up')));
+  $$('input[name="feedback-kind"]').forEach(input => input.addEventListener('change', feedbackKindChanged));
+  $('feedback-form').addEventListener('submit', sendFeedbackForm);
+  $('request-form').addEventListener('submit', sendRequest);
   $('start-over').addEventListener('click', () => { if (state.busy) return; state.resume = null; state.sessionId = null; $('jd-text').value = ''; counts(); goHome('workspace'); });
   window.addEventListener('resize', scaleResume);
   document.addEventListener('visibilitychange', () => { state.tipLastAt = performance.now(); if (!document.hidden && state.view === 'waiting') tickWaiting(); });
@@ -586,7 +698,7 @@
     const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('revealed'); observer.unobserve(entry.target); } }), { threshold: .06 });
     $$('.how-section,.honesty').forEach(el => { el.classList.add('scroll-reveal'); observer.observe(el); });
   }
-  counts(); showTip(state.tip); showQuiz(0);
+  counts(); showTip(state.tip); showQuiz(0); showUsageStats();
   // No demo: #waiting and #result only exist during a real request, so a direct link or reload goes to the workspace.
   if (location.hash === '#waiting' || location.hash === '#result') { history.replaceState(null, '', location.pathname); }
 })();

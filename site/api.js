@@ -267,6 +267,53 @@
     return rpc("admin_set_limit", { p_user: userId, p_limit: limit }, "Could not save the limit.");
   }
 
+  // ---- stats counter, extra resumes, feedback, signals (0004_feedback.sql) ----
+  // Public counter: plain REST call with the public key, no sign-in needed. Null if unavailable.
+  async function publicStats() {
+    if (!configured()) return null;
+    const cfg = config();
+    try {
+      const response = await fetch(cfg.SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/rpc/public_stats", {
+        method: "POST", headers: { apikey: cfg.SUPABASE_ANON_KEY, Authorization: "Bearer " + cfg.SUPABASE_ANON_KEY, "Content-Type": "application/json" }, body: "{}" });
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data && typeof data.users === "number" ? data : null;
+    } catch (error) { return null; }
+  }
+  function myAllowance() { return rpc("my_allowance", {}, "Could not load your resume count."); }
+  function requestMore(count, reason) {
+    count = Number(count);
+    if (!Number.isInteger(count) || count < 1 || count > 20) return Promise.reject(failure("bad_amount", "Ask for 1 to 20 resumes."));
+    return rpc("request_more", { p_requested: count, p_reason: String(reason || "").slice(0, 500) }, "Could not send your request. Please try again.");
+  }
+  function sendFeedback(input) {
+    const message = String(input.message || "").trim();
+    if (message.length < 5 || message.length > 2000) return Promise.reject(failure("feedback_length", "Please write 5 to 2000 characters."));
+    return rpc("submit_feedback", { p_kind: input.kind, p_message: message, p_rating: input.rating || null,
+      p_context: input.context || "general", p_session: input.sessionId || null }, "Could not send your feedback. Please try again.");
+  }
+  // Signals never interrupt the visitor.
+  async function recordSignal(kind, sessionId, data) {
+    try { await rpc("record_signal", { p_kind: kind, p_session: sessionId || null, p_data: data || {} }, ""); } catch (error) { /* ignored */ }
+  }
+  async function adminStats() { return await rpc("admin_stats", {}, "Could not load totals."); }
+  async function adminRequests(status) { return (await rpc("admin_requests", { p_status: status || "pending" }, "Could not load requests.")) || []; }
+  function adminDecideRequest(id, approve, granted) {
+    if (approve) {
+      granted = Number(granted);
+      if (!Number.isInteger(granted) || granted < 1 || granted > 50) return Promise.reject(failure("bad_amount", "Approve 1 to 50 resumes."));
+    }
+    return rpc("admin_decide_request", { p_id: id, p_approve: !!approve, p_granted: approve ? granted : null }, "Could not save the decision.");
+  }
+  function adminSetExtra(userId, extra) {
+    extra = Number(extra);
+    if (!Number.isInteger(extra) || extra < 0 || extra > 500) return Promise.reject(failure("bad_amount", "Use a whole number from 0 to 500."));
+    return rpc("admin_set_extra", { p_user: userId, p_extra: extra }, "Could not save extra resumes.");
+  }
+  async function adminFeedback(days) { return (await rpc("admin_feedback", { p_days: days || 90 }, "Could not load feedback.")) || []; }
+  function adminSetFeedbackStatus(id, status) { return rpc("admin_set_feedback_status", { p_id: id, p_status: status }, "Could not save the status."); }
+  async function adminWeeklyReports() { return (await rpc("admin_weekly_reports", {}, "Could not load weekly reports.")) || []; }
+
   function tidy(text) {
     const ligatures = { "ﬀ": "ff", "ﬁ": "fi", "ﬂ": "fl", "ﬃ": "ffi", "ﬄ": "ffl", "ﬅ": "st", "ﬆ": "st" };
     return String(text || "").replace(/[ﬀ-ﬆ]/g, function (l) { return ligatures[l]; }).replace(/\r/g, "").replace(/[ \t]+\n/g, "\n").replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
@@ -351,6 +398,18 @@
     isAdmin: isAdmin,
     adminUsers: adminUsers,
     adminSetLimit: adminSetLimit,
+    publicStats: publicStats,
+    myAllowance: myAllowance,
+    requestMore: requestMore,
+    sendFeedback: sendFeedback,
+    recordSignal: recordSignal,
+    adminStats: adminStats,
+    adminRequests: adminRequests,
+    adminDecideRequest: adminDecideRequest,
+    adminSetExtra: adminSetExtra,
+    adminFeedback: adminFeedback,
+    adminSetFeedbackStatus: adminSetFeedbackStatus,
+    adminWeeklyReports: adminWeeklyReports,
     extract: extract
   };
 })(window);
