@@ -20,10 +20,12 @@ const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const hasWord = (term: string, text: string) =>
   new RegExp(`(^|[^a-z0-9])${esc(term.toLowerCase())}($|[^a-z0-9])`).test(text.toLowerCase());
 
-// The role is the last part of the file name the model builds: Resume_<Name>_<Company>_<Role>
+// The role is the last part of the file name the model builds: Resume_<Name>_<Company>_<Role>.
+// Live run 30 Oct 2026: the model sometimes drops the spaces ("JuniorSoftwareDeveloper"), so split on capitals.
 export function roleOf(r: Resume): string {
   const parts = String(r.file_name ?? "").split("_").filter(Boolean);
-  return (parts.length >= 3 ? parts[parts.length - 1] : "").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 60);
+  const role = parts.length >= 3 ? parts[parts.length - 1] : "";
+  return role.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 60);
 }
 
 // keywords_dropped = JD keywords the visitor's resume already has but the tailored one lost: our misses.

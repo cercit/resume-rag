@@ -10,6 +10,7 @@ const resume = {
 Deno.test("role comes from the file name, lowercase", () => {
   assertEquals(roleOf(resume), "credit manager");
   assertEquals(roleOf({ file_name: "Resume_Asha" } as unknown as Resume), "");
+  assertEquals(roleOf({ file_name: "Resume_Ananya_Rao_FinNestTechnologies_JuniorSoftwareDeveloper" } as unknown as Resume), "junior software developer");
 });
 
 Deno.test("dropped keywords: in the visitor's resume but missing from the tailored one", () => {
