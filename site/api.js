@@ -125,7 +125,7 @@
     const client = await createClient();
     const result = await client.auth.signInWithOtp({ email: email, options: { shouldCreateUser: true } });
     if (result.error) {
-      if (result.error.status === 429) throw failure("rate_limited", "Too many codes requested. Wait a minute and try again.", 429);
+      if (result.error.status === 429) throw failure("rate_limited", "A code was sent less than a minute ago. Use that code, or wait 60 seconds and ask for a new one.", 429);
       throw authError(result.error, "Could not send the code. Check the email address and try again.");
     }
     return result.data;

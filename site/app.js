@@ -543,7 +543,8 @@
     try {
       if (!(await API.isAdmin())) return false;
       if (!(await API.handoffSession())) return false;
-      location.href = 'admin.html';
+      // a fresh address every time, so a cached old admin page (Pages keeps HTML 10 min) never loads
+      location.href = 'admin.html?t=' + Date.now();
       return true;
     } catch (error) { return false; }
   }
