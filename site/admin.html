@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Resume Tailor admin</title>
+  <title>Admin Console</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
   <style>
@@ -54,6 +54,37 @@
     .week-lists p{color:var(--muted);font-size:14px;margin-bottom:10px}
     .week-lists ol{padding-left:20px;font-size:15px;line-height:1.8}
     .admin-error{max-width:640px}
+    .overview-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+    .overview-tools span{color:var(--muted);font-size:14px;margin-left:6px}
+    .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+    .seg button{background:transparent;border:0;padding:8px 14px;font-size:14px;color:var(--muted);cursor:pointer}
+    .seg button[aria-pressed="true"]{background:var(--soft);color:var(--ink)}
+    .report{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+    .report .wide{grid-column:1/-1}
+    .chart-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;min-width:0}
+    .chart-card h2{font-size:18px;margin-bottom:4px}
+    .chart-card>p{color:var(--muted);font-size:14px;margin-bottom:12px}
+    .chart-card .headline{font-size:28px;font-weight:600;margin:-2px 0 10px}
+    .chart-card .headline small{font-size:14px;color:var(--muted);font-weight:400;margin-left:6px}
+    .chart-host svg{display:block;width:100%;max-width:100%;height:auto;overflow:visible;stroke:none;stroke-width:0}
+    .chart-host .grid{stroke:var(--line);stroke-width:1}
+    .chart-host .axis{stroke:var(--muted);stroke-width:1}
+    .chart-host .tick{fill:var(--muted);font-size:13px}
+    .chart-host .label{fill:var(--ink);font-size:14px}
+    .chart-host .value{fill:var(--ink);font-size:14px;font-weight:600}
+    .chart-host .track{fill:var(--soft)}
+    .chart-host .hit{cursor:default}
+    .chart-empty{color:var(--muted);font-size:14px;padding:18px 0}
+    .chart-table{margin-top:10px;font-size:14px;color:var(--muted)}
+    .chart-table summary{cursor:pointer;width:max-content}
+    .chart-table table{min-width:0;margin-top:8px;font-size:14px}
+    .chart-table th,.chart-table td{padding:6px 10px}
+    .chart-tip{position:fixed;z-index:50;pointer-events:none;background:var(--canvas);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:14px;color:var(--muted);box-shadow:var(--shadow)}
+    .chart-tip b{color:var(--ink)}
+    .split{display:flex;gap:24px;flex-wrap:wrap}
+    .split div strong{display:block;font-size:28px;font-weight:600}
+    .split div span{color:var(--muted);font-size:14px}
+    @media(max-width:800px){.report{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -62,24 +93,43 @@
     <div class="header-actions"><button class="button small outline" id="admin-sign-out" hidden>Sign out</button></div>
   </header>
   <main class="admin shell">
-    <h1>Admin</h1>
-    <p class="lead">Users, resume requests, feedback and the weekly review. The default limit is 3 resumes a day.</p>
+    <h1>Admin Console</h1>
+    <p class="lead">Usage, resume requests, users, feedback and the weekly review. The default limit is 3 resumes a day.</p>
 
     <section id="sign-in" class="admin-card">
       <form id="admin-email-form"><label for="admin-email">Admin email</label><input id="admin-email" type="email" required autocomplete="email" placeholder="you@example.com"><button class="button primary" type="submit">Send me a code</button></form>
-      <form id="admin-code-form" hidden><label for="admin-code">6-digit code</label><input id="admin-code" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000"><button class="button primary" type="submit">Sign in</button></form>
+      <form id="admin-code-form" hidden><p class="spam-hint" id="admin-spam-hint" role="status" hidden>No code yet? Check your <b>spam</b> or <b>junk</b> folder.<span>If you find it there, mark it "Not spam" so the next one reaches your inbox.</span></p><label for="admin-code">6-digit code</label><input id="admin-code" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000"><button class="button primary" type="submit">Sign in</button></form>
     </section>
 
     <section id="panel" hidden>
       <div class="totals" id="totals"></div>
       <div class="tabs" role="tablist">
-        <button role="tab" id="tab-requests" aria-controls="view-requests" aria-selected="true">Requests <b id="badge-requests" hidden></b></button>
+        <button role="tab" id="tab-overview" aria-controls="view-overview" aria-selected="true">Overview</button>
+        <button role="tab" id="tab-requests" aria-controls="view-requests" aria-selected="false">Requests <b id="badge-requests" hidden></b></button>
         <button role="tab" id="tab-users" aria-controls="view-users" aria-selected="false">Users</button>
         <button role="tab" id="tab-feedback" aria-controls="view-feedback" aria-selected="false">Feedback <b id="badge-feedback" hidden></b></button>
         <button role="tab" id="tab-weekly" aria-controls="view-weekly" aria-selected="false">Weekly review</button>
       </div>
 
-      <section id="view-requests" role="tabpanel">
+      <section id="view-overview" role="tabpanel">
+        <div class="overview-tools"><div class="seg" role="group" aria-label="Date range"><button type="button" data-days="7" aria-pressed="false">7 days</button><button type="button" data-days="30" aria-pressed="true">30 days</button><button type="button" data-days="90" aria-pressed="false">90 days</button></div><button class="button small outline" data-reload>Refresh</button><span id="overview-note"></span></div>
+        <div class="report">
+          <article class="chart-card wide"><h2>Resumes made per day</h2><p>Every tailored resume, including ones from approved extra resumes.</p><div class="headline" id="h-resumes"></div><div class="chart-host" id="c-resumes"></div></article>
+          <article class="chart-card"><h2>New sign-ups per day</h2><p>Accounts created with an email code.</p><div class="headline" id="h-signups"></div><div class="chart-host" id="c-signups"></div></article>
+          <article class="chart-card"><h2>PDF downloads per day</h2><p>Resumes someone downloaded: the best sign it was useful.</p><div class="headline" id="h-downloads"></div><div class="chart-host" id="c-downloads"></div></article>
+          <article class="chart-card"><h2>From sign-up to download</h2><p>All time. Each step as a share of everyone who signed up.</p><div class="chart-host" id="c-funnel"></div></article>
+          <article class="chart-card"><h2>How did it turn out?</h2><p>Thumbs on the result page, in this range.</p><div class="split" id="c-ratings"></div></article>
+          <article class="chart-card"><h2>What people change</h2><p>Tweak types after generating. A big share means the first draft should do it by default.</p><div class="chart-host" id="c-tweaks"></div></article>
+          <article class="chart-card"><h2>Tweak results</h2><p>Applied, refused (asked for facts not in the resume), no change, or failed.</p><div class="chart-host" id="c-outcomes"></div></article>
+          <article class="chart-card"><h2>Dropped keywords</h2><p>In the uploaded resume but lost in the tailored one. Our misses: fix these first.</p><div class="chart-host" id="c-dropped"></div></article>
+          <article class="chart-card"><h2>Top roles</h2><p>The jobs people tailor for.</p><div class="chart-host" id="c-roles"></div></article>
+          <article class="chart-card"><h2>Feedback by type</h2><p>Bugs, improvements and ideas in this range.</p><div class="chart-host" id="c-feedback"></div></article>
+          <article class="chart-card"><h2>Feedback status</h2><p>All open feedback, kept 90 days.</p><div class="chart-host" id="c-fstatus"></div></article>
+          <article class="chart-card wide"><h2>Requests for more resumes</h2><p>All time.</p><div class="headline" id="h-requests"></div><div class="chart-host" id="c-requests"></div></article>
+        </div>
+      </section>
+
+      <section id="view-requests" role="tabpanel" hidden>
         <div class="admin-tools"><select id="request-filter" aria-label="Show requests"><option value="pending">Waiting</option><option value="all">All</option><option value="approved">Approved</option><option value="declined">Declined</option></select><button class="button small outline" data-reload>Refresh</button><span id="request-summary"></span></div>
         <div class="table-wrap"><table><thead><tr><th>User</th><th>Asked</th><th>Reason</th><th>Now has</th><th>Status</th><th>Decide</th></tr></thead><tbody id="request-rows"></tbody></table></div>
       </section>
@@ -104,6 +154,7 @@
   </main>
   <script src="config.js"></script>
   <script src="api.js"></script>
+  <script src="admin-charts.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>

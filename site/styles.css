@@ -74,3 +74,6 @@ body{font-size:16px}.eyebrow{font-size:13px}.site-header nav{font-size:14px}.fre
 .check-row{display:flex!important;gap:10px;align-items:flex-start;line-height:1.5}
 .check-row input{width:auto;margin-top:4px;padding:0;accent-color:var(--accent)}
 .feedback-modal{width:min(520px,calc(100% - 32px))}
+.spam-hint{font-size:18px;font-weight:700;line-height:1.45;color:var(--ink);background:rgba(var(--accent-rgb),.12);border:1px solid var(--accent);border-left-width:4px;border-radius:6px;padding:14px 16px;margin:0 0 16px}
+.spam-hint b{color:var(--accent);font-weight:800}
+.spam-hint span{display:block;font-size:14px;font-weight:400;color:var(--muted);margin-top:6px}

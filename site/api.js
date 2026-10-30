@@ -330,6 +330,7 @@
   }
   async function adminFeedback(days) { return (await rpc("admin_feedback", { p_days: days || 90 }, "Could not load feedback.")) || []; }
   function adminSetFeedbackStatus(id, status) { return rpc("admin_set_feedback_status", { p_id: id, p_status: status }, "Could not save the status."); }
+  async function adminOverview(days) { return await rpc("admin_overview", { p_days: days || 30 }, "Could not load the overview."); }
   async function adminWeeklyReports() { return (await rpc("admin_weekly_reports", {}, "Could not load weekly reports.")) || []; }
 
   function tidy(text) {
@@ -430,6 +431,7 @@
     adminFeedback: adminFeedback,
     adminSetFeedbackStatus: adminSetFeedbackStatus,
     adminWeeklyReports: adminWeeklyReports,
+    adminOverview: adminOverview,
     extract: extract
   };
 })(window);

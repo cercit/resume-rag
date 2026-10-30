@@ -575,6 +575,7 @@
     $('code-expiry').textContent = left ? `Valid for ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}` : 'Code expired. Request a new one.';
     $('resend-code').disabled = cooldown > 0;
     $('resend-code').textContent = cooldown ? `Resend in ${cooldown}s` : 'Resend code';
+    if (elapsed >= 15 && $('auth-code').value.length < 6) $('spam-hint').hidden = false;
   }
   async function sendCode() {
     const email = $('auth-email').value.trim();
@@ -585,7 +586,7 @@
       await API.sendCode(email);
       if (epoch !== state.authEpoch || !$('auth-dialog').open) return;
       state.email = email; state.codeSentAt = Date.now();
-      $('email-form').hidden = true; $('code-form').hidden = false; $('auth-code').value = '';
+      $('email-form').hidden = true; $('code-form').hidden = false; $('auth-code').value = ''; $('spam-hint').hidden = true;
       $('auth-title').textContent = 'Check your inbox.';
       $('auth-description').textContent = `We sent a code to ${email}. Check your spam folder if it hasn't arrived.`;
       clearInterval(state.otpTimer); otpTick(); state.otpTimer = setInterval(otpTick, 1000); $('auth-code').focus();
@@ -594,7 +595,7 @@
   }
   function resetAuthForms() {
     state.authEpoch++;
-    clearInterval(state.otpTimer); state.codeSentAt = 0;
+    clearInterval(state.otpTimer); state.codeSentAt = 0; $('spam-hint').hidden = true;
     $('email-form').hidden = false; $('code-form').hidden = true;
     $('auth-title').innerHTML = 'Your next chapter,<br>in your inbox.';
     $('auth-description').textContent = 'Sign in with a 6-digit email code. No password to remember.';

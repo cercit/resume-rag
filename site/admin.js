@@ -1,11 +1,11 @@
-// Admin page: sign in with an email code, then four tabs. Requests: approve the number a user asked for, or change it.
+// Admin Console: sign in with an email code, then five tabs. Overview: charts of usage and quality. Requests: approve the number a user asked for, or change it.
 // Users: daily limit and extra resumes. Feedback: bugs, improvements, ideas with a status. Weekly review: the numbers.
 // The database decides who is an admin (public.admins); this page only shows what it is allowed to read.
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
   const API = window.TailorAPI;
-  let users = [], requests = [], feedback = [], weeks = [], email = '', tab = 'requests';
+  let users = [], requests = [], feedback = [], weeks = [], email = '', tab = 'overview', days = 30, overview = null;
 
   function error(text) { $('admin-error').textContent = text || ''; $('admin-error').hidden = !text; }
   const when = value => value ? new Date(value).toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Never';
@@ -176,10 +176,65 @@
     $('week-view').replaceChildren(grid, lists);
   }
 
+  // ---- overview (charts) ----
+  const C = window.AdminCharts;
+  const sum = (list, key) => list.reduce((n, d) => n + Number(d[key] || 0), 0);
+  const nice = s => String(s).replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
+  const LABELS = { wont_do: "Won't do", pending: 'Waiting', no_change: 'No change' };
+  const named = list => (list || []).map(x => ({ label: LABELS[x.label] || nice(x.label), value: Number(x.count) }));
+  function headline(id, total, text) {
+    const node = $(id); node.textContent = Number(total).toLocaleString('en-IN');
+    const small = document.createElement('small'); small.textContent = text; node.append(small);
+  }
+  function drawOverview() {
+    if (!overview) return;
+    C.hideTip();
+    const daily = overview.daily || [];
+    const series = key => daily.map(d => {
+      const date = new Date(d.day + 'T00:00:00');
+      return { label: date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
+        title: date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }), value: Number(d[key]) };
+    });
+    const range = `in the last ${overview.days} days`;
+    headline('h-resumes', sum(daily, 'resumes'), range);
+    headline('h-signups', sum(daily, 'signups'), range);
+    headline('h-downloads', sum(daily, 'downloads'), range);
+    C.columns($('c-resumes'), series('resumes'), { color: 'blue', label: 'Resumes made per day', unit: 'Resumes' });
+    C.columns($('c-signups'), series('signups'), { color: 'orange', label: 'New sign-ups per day', unit: 'Sign-ups' });
+    C.columns($('c-downloads'), series('downloads'), { color: 'blue', label: 'PDF downloads per day', unit: 'Downloads' });
+    const f = overview.funnel || {}, base = Number(f.signed_up) || 0;
+    const pct = v => base ? Math.round((100 * v) / base) + '%' : '';
+    C.bars($('c-funnel'), [['Signed up', f.signed_up], ['Made a resume', f.made_resume], ['Downloaded a PDF', f.downloaded]]
+      .map(([label, v]) => ({ label, value: Number(v) || 0, note: pct(Number(v) || 0) })), { label: 'From sign-up to download', labelHead: 'Step', unit: 'People' });
+    const r = overview.ratings || {}, total = (r.up || 0) + (r.down || 0);
+    $('c-ratings').replaceChildren(...[['👍 Good', r.up || 0], ['👎 Needs work', r.down || 0], ['Share good', total ? Math.round((100 * (r.up || 0)) / total) + '%' : '–']].map(([label, v]) => {
+      const div = document.createElement('div'), strong = document.createElement('strong'), span = document.createElement('span');
+      strong.textContent = v; span.textContent = label; div.append(strong, span); return div;
+    }));
+    C.bars($('c-tweaks'), named(overview.tweak_types), { label: 'Tweak types', labelHead: 'Tweak type', empty: 'No tweaks in this range yet.' });
+    C.bars($('c-outcomes'), named(overview.tweak_outcomes), { label: 'Tweak results', labelHead: 'Result', empty: 'No tweaks in this range yet.' });
+    C.bars($('c-dropped'), (overview.dropped_keywords || []).map(x => ({ label: x.label, value: Number(x.count) })), { label: 'Dropped keywords', labelHead: 'Keyword', unit: 'Resumes', empty: 'No dropped keywords. Good.' });
+    C.bars($('c-roles'), named(overview.roles), { label: 'Top roles', labelHead: 'Role', unit: 'Resumes', empty: 'No resumes in this range yet.' });
+    C.bars($('c-feedback'), named(overview.feedback_kinds), { label: 'Feedback by type', labelHead: 'Type', empty: 'No feedback in this range yet.' });
+    C.bars($('c-fstatus'), named(overview.feedback_status), { label: 'Feedback status', labelHead: 'Status', empty: 'No feedback yet.' });
+    headline('h-requests', overview.extra_granted || 0, 'extra resumes given so far');
+    C.bars($('c-requests'), named(overview.requests), { label: 'Requests by status', labelHead: 'Status', empty: 'No requests yet.' });
+  }
+  let resizeTimer;
+  addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (tab === 'overview') drawOverview(); }, 150); });
+
   // ---- loading ----
   async function loadTab(name) {
     error('');
     try {
+      if (name === 'overview') {
+        try { overview = await API.adminOverview(days); $('overview-note').textContent = ''; }
+        catch (e) {
+          if (e.code === 'not_admin') throw e;
+          overview = null; $('overview-note').textContent = 'Charts need the 0005 database update.'; return;
+        }
+        drawOverview();
+      }
       if (name === 'requests') { requests = await API.adminRequests($('request-filter').value); drawRequests(); }
       if (name === 'users') { users = await API.adminUsers(); drawUsers(); }
       if (name === 'feedback') { feedback = await API.adminFeedback(90); drawFeedback(); }
@@ -195,7 +250,7 @@
   async function refresh() { await Promise.all([loadTotals().catch(e => error(e.message)), loadTab(tab)]); }
   function showTab(name) {
     tab = name;
-    ['requests', 'users', 'feedback', 'weekly'].forEach(t => {
+    ['overview', 'requests', 'users', 'feedback', 'weekly'].forEach(t => {
       $('tab-' + t).setAttribute('aria-selected', String(t === name));
       $('view-' + t).hidden = t !== name;
     });
@@ -214,15 +269,24 @@
       email = $('admin-email').value.trim();
       await API.sendCode(email);
       $('admin-email-form').hidden = true; $('admin-code-form').hidden = false; $('admin-code').focus();
+      $('admin-spam-hint').hidden = true;
+      clearTimeout(spamTimer);
+      spamTimer = setTimeout(() => { if ($('admin-code').value.length < 6) $('admin-spam-hint').hidden = false; }, 15000);
     } catch (e) { error(e.message); }
   });
+  let spamTimer;
   $('admin-code').addEventListener('input', event => { event.target.value = event.target.value.replace(/\D/g, '').slice(0, 6); });
   $('admin-code-form').addEventListener('submit', async event => {
     event.preventDefault(); error('');
     try { await API.verifyCode(email, $('admin-code').value); await enter(); }
     catch (e) { error(e.message); }
   });
-  ['requests', 'users', 'feedback', 'weekly'].forEach(t => $('tab-' + t).addEventListener('click', () => showTab(t)));
+  ['overview', 'requests', 'users', 'feedback', 'weekly'].forEach(t => $('tab-' + t).addEventListener('click', () => showTab(t)));
+  document.querySelectorAll('[data-days]').forEach(b => b.addEventListener('click', () => {
+    days = Number(b.dataset.days);
+    document.querySelectorAll('[data-days]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    loadTab('overview');
+  }));
   document.querySelectorAll('[data-reload]').forEach(b => b.addEventListener('click', refresh));
   $('filter').addEventListener('input', drawUsers);
   $('request-filter').addEventListener('change', () => loadTab('requests'));

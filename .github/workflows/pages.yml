@@ -33,7 +33,7 @@ jobs:
           rm -rf _publish/work _publish/START_SITE.cmd _publish/README.md _publish/previews
           # Pages caches files for 10 min; a per-deploy version on each file makes browsers load the new ones.
           v="${GITHUB_SHA::7}"
-          sed -i -E "s/(href|src)=\"(styles\.css|config\.js|render\.js|api\.js|demo-data\.js|app\.js|admin\.js)\"/\1=\"\2?v=$v\"/g" _publish/*.html
+          sed -i -E "s/(href|src)=\"(styles\.css|config\.js|render\.js|api\.js|demo-data\.js|app\.js|admin\.js|admin-charts\.js)\"/\1=\"\2?v=$v\"/g" _publish/*.html
           grep -c "?v=$v" _publish/*.html
       - uses: actions/upload-pages-artifact@v3
         with:
