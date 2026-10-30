@@ -168,4 +168,25 @@ do $$ begin
   raise notice 'PASS F7 undo signal';
 end $$;
 
+
+
+-- F8. admin_overview (0005): admin only, daily series and funnel
+select testh.as_user('authenticated', '00000000-0000-0000-0000-0000000000d1', 'dev@test.local');
+do $$ begin
+  begin perform public.admin_overview(30); raise exception 'FAIL: user read admin_overview';
+  exception when insufficient_privilege then null; end;
+  raise notice 'PASS F8 user refused admin_overview';
+end $$;
+reset role;
+select testh.as_user('authenticated', '00000000-0000-0000-0000-0000000000c1', 'boss@test.local');
+do $$ declare o jsonb; begin
+  o := public.admin_overview(30);
+  if jsonb_array_length(o -> 'daily') <> 30 then raise exception 'FAIL: % days', jsonb_array_length(o -> 'daily'); end if;
+  if (o -> 'daily' -> 29 ->> 'resumes')::int < 5 or (o -> 'daily' -> 29 ->> 'signups')::int < 3 then raise exception 'FAIL: today %', o -> 'daily' -> 29; end if;
+  if (o -> 'funnel' ->> 'downloaded')::int <> 1 or (o -> 'funnel' ->> 'made_resume')::int < 2 then raise exception 'FAIL: funnel %', o -> 'funnel'; end if;
+  if o -> 'tweak_types' -> 0 ->> 'label' <> 'shorten' or o -> 'dropped_keywords' -> 0 ->> 'label' <> 'power bi' then raise exception 'FAIL: lists %', o; end if;
+  if (o ->> 'extra_granted')::int <> 2 or jsonb_array_length(public.admin_overview(500) -> 'daily') <> 180 then raise exception 'FAIL: extra or day cap'; end if;
+  raise notice 'PASS F8 admin_overview numbers';
+end $$;
+reset role;
 select 'ALL_FEEDBACK_TESTS_PASSED';
