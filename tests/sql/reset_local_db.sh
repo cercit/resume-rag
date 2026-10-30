@@ -9,3 +9,4 @@ $P -d t1 -f tests/sql/supabase_shim.sql
 $P -d t1 -f supabase/migrations/0001_schema.sql
 $P -d t1 -f supabase/migrations/0002_profiles.sql
 $P -d t1 -f supabase/migrations/0003_admin.sql
+$P -d t1 -f supabase/migrations/0004_feedback.sql
