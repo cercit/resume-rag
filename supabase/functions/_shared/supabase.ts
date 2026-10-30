@@ -36,7 +36,7 @@ export function makeDb(c: SupabaseClient): Db {
     async sessionsToday() {
       const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
       const { count, error } = await c.from("resume_sessions").select("id", { count: "exact", head: true })
-        .gte("created_at", since);
+        .gte("created_at", since).eq("via_extra", false);
       if (error) throw new DbError(error.message);
       return count ?? 0;
     },
@@ -67,6 +67,15 @@ export function makeDb(c: SupabaseClient): Db {
       const row = check(await c.from("resume_versions").select("resume_json").eq("session_id", session)
         .eq("version", version).maybeSingle()) as { resume_json: Resume } | null;
       return row?.resume_json ?? null;
+    },
+    async recordSignal(kind, session, data) {
+      // a lost signal must never cost the visitor their resume
+      try {
+        const { error } = await c.rpc("record_signal", { p_kind: kind, p_session: session, p_data: data });
+        if (error) console.warn(`record_signal ${kind}: ${error.message}`);
+      } catch (e) {
+        console.warn(`record_signal ${kind}: ${(e as Error).message}`);
+      }
     },
   };
 }

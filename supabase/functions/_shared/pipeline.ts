@@ -7,6 +7,7 @@ import {
   allText, canonical, cleanAllChars, fillExperience, fixLigatures, placesIntoDates, type Ungrounded,
 } from "./guards.ts";
 import { EXTRACT_SYSTEM, extractUser, TAILOR_SYSTEM, tailorUser, TWEAK_SYSTEM, tweakUser } from "./prompts.ts";
+import { signalsFromGenerate, type TweakOutcome, tweakSignal } from "./signals.ts";
 
 export interface Chunk { id: number; source: string; heading: string; content: string; similarity: number }
 
@@ -21,6 +22,8 @@ export interface Db {
     { tweaks_used: number; max_tweaks: number; current_version: number; profile_json: StoredProfile; jd_text: string } | null
   >;
   getVersion(session: string, version: number): Promise<Resume | null>;
+  // quality signal for the weekly review (0004_feedback.sql); must never throw
+  recordSignal(kind: string, session: string | null, data: unknown): Promise<void>;
 }
 
 export interface Rag {
@@ -164,10 +167,12 @@ export async function generate(input: { resume_text?: unknown; jd_text?: unknown
   if (resumeText.length < LIMITS.minResume) {
     return fail(400, "resume_too_short", "This looks like a scan. Paste your resume text instead.");
   }
-  // cheap early check so a 4th session does not spend LLM calls; start_session enforces it for real
-  // 3 a day unless an admin raised it (user_limits, 0003_admin.sql)
+  // cheap early check so a 4th session does not spend LLM calls; start_session enforces it for real.
+  // dailyLimit is the daily limit plus extra resumes an admin approved (0004_feedback.sql);
+  // sessionsToday counts only sessions that did not use an extra one.
+  const started = Date.now();
   const limit = await deps.db.dailyLimit();
-  const limitMessage = `You have used today's ${limit} resume${limit === 1 ? "" : "s"}. Try again tomorrow.`;
+  const limitMessage = "You have used all your resumes for today. Ask for more, or try again tomorrow.";
   if ((await deps.db.sessionsToday()) >= limit) {
     return fail(429, "daily_session_limit", limitMessage);
   }
@@ -204,12 +209,10 @@ export async function generate(input: { resume_text?: unknown; jd_text?: unknown
     throw e;
   }
   await deps.db.saveVersion(sessionId, final, null);
-  return ok({
-    session_id: sessionId,
-    resume: final,
-    tweaks_left: 10,
-    notes: { ...keywordNotes(final), gaps: stripGaps(gaps), removed: problems.ungrounded.map((u) => u.item) },
-  });
+  const notes = { ...keywordNotes(final), gaps: stripGaps(gaps), removed: problems.ungrounded.map((u) => u.item) };
+  await deps.db.recordSignal("generate", sessionId,
+    signalsFromGenerate(resumeText, final, notes.keywords_missing, notes.removed.length, Date.now() - started));
+  return ok({ session_id: sessionId, resume: final, tweaks_left: 10, notes });
 }
 
 function stripGaps(g: string[]): string[] {
@@ -258,7 +261,27 @@ const NEEDS_RAG = /\b(add|include|emphasi[sz]e|rewrite)\b/i;
 // Instructions that are plainly not resume edits are refused before any LLM call (and never charged).
 const OFF_TOPIC = /(ignore|disregard|forget)\b.{0,40}\b(instructions?|rules?|prompt)|system prompt|\bpoem\b|\bsong\b|\bjoke\b|\bstory\b|write (me )?code/i;
 
+// Every tweak that reaches a session leaves a signal: its category and outcome feed the weekly review.
 export async function tweak(input: { session_id?: unknown; instruction?: unknown }, deps: Deps): Promise<Result> {
+  const started = Date.now();
+  const session = typeof input.session_id === "string" ? input.session_id : "";
+  const instruction = typeof input.instruction === "string" ? input.instruction.trim() : "";
+  const record = (outcome: TweakOutcome) => deps.db.recordSignal("tweak", session, tweakSignal(instruction, outcome, Date.now() - started));
+  let result: Result;
+  try {
+    result = await tweakCore(input, deps);
+  } catch (e) {
+    if (/^[0-9a-f-]{36}$/i.test(session) && instruction) await record("failed");
+    throw e;
+  }
+  const error = result.body.error;
+  const outcome: TweakOutcome | null = result.status === 200 ? "applied"
+    : error === "refused" ? "refused" : error === "no_change" ? "no_change" : null;
+  if (outcome) await record(outcome);
+  return result;
+}
+
+async function tweakCore(input: { session_id?: unknown; instruction?: unknown }, deps: Deps): Promise<Result> {
   const session = typeof input.session_id === "string" ? input.session_id : "";
   const instruction = typeof input.instruction === "string" ? input.instruction.trim() : "";
   if (!session || !/^[0-9a-f-]{36}$/i.test(session)) return fail(400, "bad_session", "Missing session.");

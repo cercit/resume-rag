@@ -31,7 +31,7 @@ async function asUser<T>(uid: string, fn: (tx: postgres.TransactionSql) => Promi
 export function pgDb(uid: string): Db {
   return {
     sessionsToday: () => asUser(uid, async (tx) =>
-      Number((await tx`select count(*) as n from resume_sessions where created_at > now() - interval '24 hours'`)[0].n)),
+      Number((await tx`select count(*) as n from resume_sessions where created_at > now() - interval '24 hours' and not via_extra`)[0].n)),
     dailyLimit: () => asUser(uid, async (tx) => Number((await tx`select my_daily_limit() as n`)[0].n)),
     startSession: (jd, p) => asUser(uid, async (tx) => (await tx`select start_session(${jd}, ${tx.json(p as never)}) as id`)[0].id),
     saveVersion: (s, j, t) => asUser(uid, async (tx) => {
@@ -45,6 +45,8 @@ export function pgDb(uid: string): Db {
       ((await tx`select tweaks_used, max_tweaks, current_version, profile_json, jd_text from resume_sessions where id = ${s}::uuid`)[0] ?? null) as any),
     getVersion: (s, v) => asUser(uid, async (tx) =>
       (await tx`select resume_json from resume_versions where session_id = ${s}::uuid and version = ${v}`)[0]?.resume_json ?? null),
+    recordSignal: (k, s, d) => asUser(uid, async (tx) => { await tx`select record_signal(${k}, ${s}::uuid, ${tx.json(d as never)})`; })
+      .catch(() => {}),
   };
 }
 

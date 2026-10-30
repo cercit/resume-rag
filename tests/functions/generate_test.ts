@@ -109,7 +109,7 @@ test("generate: 4th session in 24 hours is refused before any LLM call", async (
   const before = f.calls.length;
   const res = await generate({ resume_text: resumeText(profile), jd_text: await jd("changer") }, deps(uid, f.llm));
   assertEquals(res.status, 429);
-  assertEquals(res.body.message, "You have used today's 3 resumes. Try again tomorrow.");
+  assertEquals(res.body.message, "You have used all your resumes for today. Ask for more, or try again tomorrow.");
   assertEquals(f.calls.length, before);
 });
 
