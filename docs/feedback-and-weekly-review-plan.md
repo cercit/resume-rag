@@ -232,3 +232,14 @@ There are three tabs: **Users** (as now), **Feedback** and **Weekly review**.
 | 8 | Admin tabs | – |
 
 Steps 1–5 give you feedback and signals straight away. Steps 6–8 need at least one week of data before the report shows anything useful.
+
+## Added on 30 Oct 2026: counter and "request more"
+
+- **All-time counter:** `usage_totals` keeps one row per person with their resume count. It holds counts only, so it survives the 7-day purge. `public_stats()` feeds "N people have tailored M resumes here" under the hero. The admin page shows the same totals, plus sign-ups.
+- **Request more resumes:** when the daily limit is used up, the error and the profile panel show **Request more resumes**. The visitor asks for 1 to 20 and can add an optional reason.
+  - They can have one request waiting at a time, and send at most 3 a day.
+  - In Admin → Requests, you approve the number asked for or type a different one (1 to 50), or decline.
+  - Approved resumes are added as **extra** resumes. They're used after the daily limit and never expire.
+  - The profile shows: waiting, approved (how many), or not approved.
+- Built in this order, together with Phase 1, Phase 2 and the weekly numbers (Step 6).
+- Step 7 (AI suggestions) waits until there's at least one week of data.
