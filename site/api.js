@@ -296,6 +296,24 @@
   async function recordSignal(kind, sessionId, data) {
     try { await rpc("record_signal", { p_kind: kind, p_session: sessionId || null, p_data: data || {} }, ""); } catch (error) { /* ignored */ }
   }
+  // Profile → admin page without a second code. Sign-in lives in memory only, so it is handed over once
+  // through this tab's sessionStorage: the admin page reads and deletes it at once, and ignores it after 60 s.
+  const HANDOFF = "rt-admin-handoff";
+  async function handoffSession() {
+    const result = await (await existingClient()).auth.getSession();
+    const s = result.data && result.data.session;
+    if (!s) return false;
+    try { sessionStorage.setItem(HANDOFF, JSON.stringify({ a: s.access_token, r: s.refresh_token, t: Date.now() })); return true; }
+    catch (error) { return false; }
+  }
+  async function takeHandoff() {
+    let saved = null;
+    try { saved = JSON.parse(sessionStorage.getItem(HANDOFF) || "null"); sessionStorage.removeItem(HANDOFF); } catch (error) { return null; }
+    if (!saved || !saved.a || Date.now() - saved.t > 60000) return null;
+    const client = await createClient();
+    const result = await client.auth.setSession({ access_token: saved.a, refresh_token: saved.r });
+    return result.error ? null : result.data.session;
+  }
   async function adminStats() { return await rpc("admin_stats", {}, "Could not load totals."); }
   async function adminRequests(status) { return (await rpc("admin_requests", { p_status: status || "pending" }, "Could not load requests.")) || []; }
   function adminDecideRequest(id, approve, granted) {
@@ -403,6 +421,8 @@
     requestMore: requestMore,
     sendFeedback: sendFeedback,
     recordSignal: recordSignal,
+    handoffSession: handoffSession,
+    takeHandoff: takeHandoff,
     adminStats: adminStats,
     adminRequests: adminRequests,
     adminDecideRequest: adminDecideRequest,

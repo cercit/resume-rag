@@ -538,6 +538,15 @@
       versions: row.current_version, history: [], notes: keywordNotes(row.resume) });
     $('profile-dialog').close(); reviewResult();
   }
+  // Admin accounts (public.admins) go straight to the admin page, carrying the sign-in over once (no second code).
+  async function goAdmin() {
+    try {
+      if (!(await API.isAdmin())) return false;
+      if (!(await API.handoffSession())) return false;
+      location.href = 'admin.html';
+      return true;
+    } catch (error) { return false; }
+  }
   async function signOutNow() {
     if (state.busy) { toast('Finish the current action before signing out.'); return; }
     try {
@@ -647,11 +656,12 @@
   window.addEventListener('resize', scaleResume);
   document.addEventListener('visibilitychange', () => { state.tipLastAt = performance.now(); if (!document.hidden && state.view === 'waiting') tickWaiting(); });
   API.onAuthChange(session => updateAccount(session));
-  $('account-button').addEventListener('click', () => {
+  $('account-button').addEventListener('click', async () => {
     if (!state.session) { state.pendingGenerate = false; openAuth(); return; }
-    openProfile();
+    if (!(await goAdmin())) openProfile();
   });
   $('sign-out').addEventListener('click', signOutNow);
+
   $('header-sign-out').addEventListener('click', signOutNow);
   $('profile-form').addEventListener('submit', async event => {
     event.preventDefault(); message('profile-error', '');
@@ -680,7 +690,8 @@
       if (!$('auth-dialog').open || epoch !== state.authEpoch) return;
       const pending = state.pendingGenerate; state.pendingGenerate = false;
       $('auth-dialog').close(); resetAuthForms();
-      if (pending) beginWaiting(false); else { toast('Signed in. Your next chapter is waiting.'); goHome('workspace'); }
+      if (pending) beginWaiting(false);
+      else if (!(await goAdmin())) { toast('Signed in. Your next chapter is waiting.'); goHome('workspace'); }
     } catch (error) { message('auth-error', friendlyError(error)); }
     finally { button.disabled = false; }
   });

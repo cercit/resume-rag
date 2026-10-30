@@ -230,4 +230,6 @@
   $('feedback-status').addEventListener('change', drawFeedback);
   $('week-pick').addEventListener('change', drawWeek);
   $('admin-sign-out').addEventListener('click', async () => { await API.signOut(); location.reload(); });
+  // Arrived from the profile's "Open admin panel": use the handed-over sign-in, no second code.
+  API.takeHandoff().then(session => { if (session) enter().catch(e => error(e.message)); }).catch(() => {});
 })();

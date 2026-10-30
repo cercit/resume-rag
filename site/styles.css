@@ -51,8 +51,10 @@ body{font-size:16px}.eyebrow{font-size:13px}.site-header nav{font-size:14px}.fre
 .account-avatar{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:100%;background:var(--accent);color:#0a0a0f;font-size:13px;font-weight:700}
 
 /* stats counter, request more, rating card, feedback form (30 Oct 2026) */
-.usage-stats{color:var(--muted);font-size:14px;margin-top:14px}
-.usage-stats b{color:var(--ink);font-weight:600}
+.usage-stats{display:inline-flex;align-items:center;gap:10px;color:var(--muted);font-size:16px;margin-top:20px;padding:10px 16px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+.usage-stats[hidden]{display:none}
+.usage-stats::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(80,180,120,.18);flex:none}
+.usage-stats b{color:var(--ink);font-weight:700;font-size:18px}
 .limit-actions{margin-top:16px}
 .rate-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:23px;margin-top:16px}
 .rate-card h2{font-size:18px}
